@@ -1,0 +1,102 @@
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+[RequireComponent(typeof(CharacterController))]
+public class RobotMovement : MonoBehaviour
+{
+    [Header("References")]
+    public Transform orientation;
+    public Transform robotObj;
+
+    private CharacterController controller;
+    private Animator anim;
+
+    [Header("Movement Settings")]
+    public float walkSpeed = 2.5f;
+    public float runSpeed = 6.0f;
+    public float rotationSpeed = 10f;
+    public float gravity = -9.81f;
+    public float speedSmooth = 10f;
+
+    private float currentSpeed;
+    private float verticalVelocity;
+
+    private Vector2 moveInput;
+    private bool isSprinting;
+
+    void Start()
+    {
+        controller = GetComponent<CharacterController>();
+        anim = robotObj != null ? robotObj.GetComponentInParent<Animator>() : GetComponentInChildren<Animator>();
+
+        if (anim != null)
+            anim.applyRootMotion = false;
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    public void OnMove(InputValue value)
+    {
+        moveInput = value.Get<Vector2>();
+    }
+
+    public void OnSprint(InputValue value)
+    {
+        isSprinting = value.isPressed;
+    }
+
+    void Update()
+    {
+        RotateOrientation();
+        ApplyMovement();
+    }
+
+    void RotateOrientation()
+    {
+        if (Camera.main == null || orientation == null) return;
+
+        Vector3 viewDir = transform.position - new Vector3(
+            Camera.main.transform.position.x,
+            transform.position.y,
+            Camera.main.transform.position.z
+        );
+
+        orientation.forward = viewDir.normalized;
+    }
+
+    void ApplyMovement()
+    {
+        if (orientation == null) return;
+
+        Vector3 moveDirection = orientation.forward * moveInput.y + orientation.right * moveInput.x;
+        moveDirection.y = 0f;
+
+        bool hasMoveInput = moveInput.magnitude > 0.1f;
+        bool shouldSprint = hasMoveInput && isSprinting;
+
+        float targetSpeed = hasMoveInput ? (shouldSprint ? runSpeed : walkSpeed) : 0f;
+        currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * speedSmooth);
+
+        if (anim != null)
+        {
+            anim.SetBool("IsWalking", hasMoveInput);
+            anim.SetBool("IsSprinting", shouldSprint);
+        }
+
+        Transform visual = robotObj != null ? robotObj : transform;
+        if (hasMoveInput)
+        {
+            Vector3 lookDir = moveDirection.normalized;
+            visual.forward = Vector3.Slerp(visual.forward, lookDir, Time.deltaTime * rotationSpeed);
+        }
+
+        if (controller.isGrounded && verticalVelocity < 0f) verticalVelocity = -2f;
+        verticalVelocity += gravity * Time.deltaTime;
+
+        Vector3 finalVelocity = moveDirection.normalized * currentSpeed;
+        finalVelocity.y = verticalVelocity;
+
+        controller.Move(finalVelocity * Time.deltaTime);
+    }
+}
