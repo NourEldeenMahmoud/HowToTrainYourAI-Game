@@ -4,8 +4,10 @@
 
 | | |
 |---|---|
-| **آخر تحديث للملف** | **24 مارس 2026** |
+| **آخر تحديث للملف** | **10 أبريل 2026** |
 | **آخر مسح أولي** | 23 مارس 2026 |
+
+**GitHub:** [HowToTrainYourAI-Game](https://github.com/NourEldeenMahmoud/HowToTrainYourAI-Game) — دليل العمل الجماعي: **`TEAM_COLLABORATION_GUIDE.md`**
 
 ---
 
@@ -16,7 +18,7 @@
 | اسم المنتج في Unity | How To Train Your AI |
 | إصدار المحرر | Unity **6000.3.8f1** (Unity 6) |
 | مسار المشروع | `How To Train Your AI` |
-| إدارة نسخ | المجلد الحالي ليس مستودع Git (يمكن تهيئته لاحقًا) |
+| إدارة نسخ | Git + Git LFS على GitHub (انظر `TEAM_COLLABORATION_GUIDE.md`) |
 
 ---
 
