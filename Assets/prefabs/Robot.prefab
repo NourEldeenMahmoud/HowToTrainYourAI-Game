@@ -109,7 +109,7 @@ MonoBehaviour:
   robotObj: {fileID: 956142819330985785}
   walkSpeed: 0.5
   runSpeed: 1
-  rotationSpeed: 10
+  rotationSpeed: 2
   gravity: -9.81
   speedSmooth: 10
 --- !u!143 &3657682250660803560
@@ -246,8 +246,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3826890972740691077}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.11957235, y: 7.15246e-24, z: -5.903222e-25, w: 0.9928255}
-  m_LocalPosition: {x: 0, y: 1.412735, z: -4.069809}
+  m_LocalRotation: {x: 0.10540843, y: -2.055457e-16, z: -5.0679214e-18, w: 0.99442905}
+  m_LocalPosition: {x: 0, y: 1.2905952, z: -4.069809}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -277,7 +277,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 25
+    FieldOfView: 20
     OrthographicSize: 5
     NearClipPlane: 0.01
     FarClipPlane: 1000
@@ -320,7 +320,7 @@ MonoBehaviour:
   Orbits:
     Top:
       Radius: 2.3
-      Height: 10.81
+      Height: 12.09
     Center:
       Radius: 4
       Height: 2.25

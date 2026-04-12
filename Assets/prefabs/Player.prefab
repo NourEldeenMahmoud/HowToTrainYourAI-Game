@@ -440,8 +440,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   orientation: {fileID: 2459176471354869613}
   playerObj: {fileID: 1357591655845894730}
-  walkSpeed: 4
-  sprintSpeed: 6
+  walkSpeed: 2
+  sprintSpeed: 4
   rotationSpeed: 6
   gravity: -9.81
   speedSmooth: 10
