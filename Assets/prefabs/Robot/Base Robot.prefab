@@ -46,7 +46,7 @@ GameObject:
   - component: {fileID: 2386832169357299892}
   - component: {fileID: 5172122292793008630}
   m_Layer: 0
-  m_Name: Robot
+  m_Name: Base Robot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -107,6 +107,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RobotMovement
   orientation: {fileID: 8403349858316641124}
   robotObj: {fileID: 956142819330985785}
+  miniGameFaults: {fileID: 0}
   walkSpeed: 0.5
   runSpeed: 1
   rotationSpeed: 2

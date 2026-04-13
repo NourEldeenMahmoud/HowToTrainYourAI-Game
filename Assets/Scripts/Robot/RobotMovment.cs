@@ -11,6 +11,9 @@ public class RobotMovement : MonoBehaviour
     private CharacterController controller;
     private Animator anim;
 
+    [Header("MiniGame Fault Injection (optional)")]
+    [SerializeField] private MiniGame1FaultState miniGameFaults;
+
     [Header("Movement Settings")]
     public float walkSpeed = 2.5f;
     public float runSpeed = 6.0f;
@@ -28,6 +31,11 @@ public class RobotMovement : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         anim = robotObj != null ? robotObj.GetComponentInParent<Animator>() : GetComponentInChildren<Animator>();
+
+        if (miniGameFaults == null)
+        {
+            miniGameFaults = GetComponent<MiniGame1FaultState>();
+        }
 
         if (anim != null)
             anim.applyRootMotion = false;
@@ -69,13 +77,27 @@ public class RobotMovement : MonoBehaviour
     {
         if (orientation == null) return;
 
-        Vector3 moveDirection = orientation.forward * moveInput.y + orientation.right * moveInput.x;
+        Vector3 forward = orientation.forward;
+        Vector3 right = orientation.right;
+
+        if (miniGameFaults != null && miniGameFaults.faultsEnabled && Mathf.Abs(miniGameFaults.yawDriftDeg) > 0.01f)
+        {
+            Quaternion driftRot = Quaternion.Euler(0f, miniGameFaults.yawDriftDeg, 0f);
+            forward = driftRot * forward;
+            right = driftRot * right;
+        }
+
+        Vector3 moveDirection = forward * moveInput.y + right * moveInput.x;
         moveDirection.y = 0f;
 
         bool hasMoveInput = moveInput.magnitude > 0.1f;
         bool shouldSprint = hasMoveInput && isSprinting;
 
         float targetSpeed = hasMoveInput ? (shouldSprint ? runSpeed : walkSpeed) : 0f;
+        if (miniGameFaults != null && miniGameFaults.faultsEnabled)
+        {
+            targetSpeed *= miniGameFaults.GetSpeedMultiplier();
+        }
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * speedSmooth);
 
         if (anim != null)
