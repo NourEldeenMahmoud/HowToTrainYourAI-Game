@@ -14,6 +14,11 @@ public class StartMiniGame1OnRobotControl : MonoBehaviour
 
     private bool hasTriggered;
 
+    public void SetStartOnRobotControl(bool value)
+    {
+        startOnRobotControl = value;
+    }
+
     private void OnEnable()
     {
         if (controlManager == null)

@@ -37,6 +37,10 @@ public class ControlManager : MonoBehaviour
 
     private bool isPlayerControlActive = true;
     private bool isInputLocked;
+    /// <summary>When true (and controlling player), movement/look are blocked; Tab invokes <see cref="messageBlockingTabPressed"/> (e.g. close message).</summary>
+    private bool messageBlocksPlayerControls;
+    private event Action messageBlockingTabPressed;
+    private bool lookSuppressed;
     private CinemachineInputAxisController[] cachedCinemachineInputControllers;
     private bool[] cachedCinemachineInputControllersEnabled;
     private float targetFxWeight;
@@ -82,7 +86,53 @@ public class ControlManager : MonoBehaviour
 
     private void OnSwitchPerformed(InputAction.CallbackContext context)
     {
+        if (isInputLocked)
+        {
+            return;
+        }
+
+        if (messageBlocksPlayerControls && isPlayerControlActive)
+        {
+            // Close the message then immediately switch to robot.
+            messageBlockingTabPressed?.Invoke();
+            ToggleControl();
+            return;
+        }
+
         ToggleControl();
+    }
+
+    public void AddMessageBlockingTabListener(Action listener)
+    {
+        messageBlockingTabPressed += listener;
+    }
+
+    public void RemoveMessageBlockingTabListener(Action listener)
+    {
+        messageBlockingTabPressed -= listener;
+    }
+
+    /// <summary>
+    /// Blocks player movement and camera look while a message UI is open, and hides the Player HUD.
+    /// Tab while blocking: closes the message then switches to robot.
+    /// Does not use full <see cref="SetInputLocked"/> so result-screen lock stays separate.
+    /// </summary>
+    public void SetMessageBlocksPlayerControls(bool blocking)
+    {
+        if (messageBlocksPlayerControls == blocking)
+        {
+            return;
+        }
+
+        messageBlocksPlayerControls = blocking;
+
+        if (playerUiRoot != null)
+        {
+            bool showPlayerHud = !blocking && !isInputLocked && isPlayerControlActive;
+            playerUiRoot.SetActive(showPlayerHud);
+        }
+
+        SyncGameplayInputLookAndCursor();
     }
 
     private void Update()
@@ -160,51 +210,153 @@ public class ControlManager : MonoBehaviour
         if (isInputLocked == locked) return;
         isInputLocked = locked;
 
-        if (playerInput != null) playerInput.enabled = !locked && isPlayerControlActive;
-        if (robotInput != null) robotInput.enabled = !locked && !isPlayerControlActive;
-
-        // Disable/enable Cinemachine look input controllers so mouse look stops while UI overlays are up.
-        CacheCinemachineControllersIfNeeded();
-        if (cachedCinemachineInputControllers != null && cachedCinemachineInputControllersEnabled != null)
+        if (locked)
         {
-            for (int i = 0; i < cachedCinemachineInputControllers.Length; i++)
-            {
-                CinemachineInputAxisController c = cachedCinemachineInputControllers[i];
-                if (c == null) continue;
+            // Hide all POV UI while locked (result screen, message modal, etc.)
+            if (podUiRoot != null) podUiRoot.SetActive(false);
+            if (playerUiRoot != null) playerUiRoot.SetActive(false);
 
-                if (locked)
-                {
-                    cachedCinemachineInputControllersEnabled[i] = c.enabled;
-                    c.enabled = false;
-                }
-                else
-                {
-                    c.enabled = cachedCinemachineInputControllersEnabled[i];
-                }
+            if (podFxVolume != null) podFxVolume.weight = 0f;
+            targetFxWeight = 0f;
+        }
+        else
+        {
+            // Restore HUD like SetControlState (pod only when not controlling player).
+            if (playerUiRoot != null)
+            {
+                playerUiRoot.SetActive(isPlayerControlActive);
+            }
+
+            if (podUiRoot != null)
+            {
+                podUiRoot.SetActive(!isPlayerControlActive);
             }
         }
 
-        // Cursor should be usable when locked for UI clicks.
-        Cursor.lockState = locked ? CursorLockMode.None : CursorLockMode.Locked;
-        Cursor.visible = locked;
-
-        // Hide all POV UI while locked (result screen, etc.)
-        if (podUiRoot != null) podUiRoot.SetActive(false);
-        if (playerUiRoot != null) playerUiRoot.SetActive(false);
-
-        // Keep FX off when locked.
-        if (podFxVolume != null) podFxVolume.weight = 0f;
-        targetFxWeight = 0f;
+        SyncGameplayInputLookAndCursor();
 
         InputLockChanged?.Invoke(isInputLocked);
     }
 
-    private void CacheCinemachineControllersIfNeeded()
+    private void SyncGameplayInputLookAndCursor()
     {
-        if (cachedCinemachineInputControllers != null) return;
+        bool fullLock = isInputLocked;
+        bool messageFreezesPlayer = messageBlocksPlayerControls && isPlayerControlActive;
 
-        // Include inactive objects (result screen flow may disable UI/cameras).
-        // Use older API for broader Unity compatibility.
+        if (playerInput != null)
+        {
+            if (fullLock)
+            {
+                playerInput.enabled = false;
+            }
+            else if (isPlayerControlActive)
+            {
+                playerInput.enabled = true;
+                ApplyPlayerMoveSprintFreeze(messageFreezesPlayer);
+            }
+            else
+            {
+                playerInput.enabled = false;
+                ApplyPlayerMoveSprintFreeze(false);
+            }
+        }
+
+        if (robotInput != null)
+        {
+            robotInput.enabled = !isPlayerControlActive && !fullLock;
+        }
+
+        bool shouldSuppressLook = fullLock || messageFreezesPlayer;
+        EnsureCinemachineControllersCached();
+
+        if (cachedCinemachineInputControllers != null && cachedCinemachineInputControllersEnabled != null)
+        {
+            if (shouldSuppressLook)
+            {
+                if (!lookSuppressed)
+                {
+                    for (int i = 0; i < cachedCinemachineInputControllers.Length; i++)
+                    {
+                        CinemachineInputAxisController c = cachedCinemachineInputControllers[i];
+                        if (c == null) continue;
+
+                        cachedCinemachineInputControllersEnabled[i] = c.enabled;
+                    }
+
+                    lookSuppressed = true;
+                }
+
+                // Keep forcing off every sync — Cinemachine may re-enable the component (e.g. Auto Enable Inputs).
+                for (int i = 0; i < cachedCinemachineInputControllers.Length; i++)
+                {
+                    CinemachineInputAxisController c = cachedCinemachineInputControllers[i];
+                    if (c == null) continue;
+
+                    c.enabled = false;
+                }
+            }
+            else if (lookSuppressed)
+            {
+                for (int i = 0; i < cachedCinemachineInputControllers.Length; i++)
+                {
+                    CinemachineInputAxisController c = cachedCinemachineInputControllers[i];
+                    if (c == null) continue;
+
+                    c.enabled = cachedCinemachineInputControllersEnabled[i];
+                }
+
+                lookSuppressed = false;
+            }
+        }
+
+        if (fullLock)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+    }
+
+    private void ApplyPlayerMoveSprintFreeze(bool freeze)
+    {
+        if (playerInput == null || playerInput.actions == null)
+        {
+            return;
+        }
+
+        InputActionMap map = playerInput.actions.FindActionMap("Player");
+        if (map == null)
+        {
+            return;
+        }
+
+        InputAction move = map.FindAction("Move");
+        InputAction sprint = map.FindAction("Sprint");
+
+        if (freeze)
+        {
+            move?.Disable();
+            sprint?.Disable();
+        }
+        else
+        {
+            move?.Enable();
+            sprint?.Enable();
+        }
+    }
+
+    private void EnsureCinemachineControllersCached()
+    {
+        if (cachedCinemachineInputControllers != null && cachedCinemachineInputControllers.Length > 0)
+        {
+            return;
+        }
+
+        // Include inactive objects. Re-query if the first pass ran before cameras existed (empty array was cached as non-null).
         cachedCinemachineInputControllers = UnityEngine.Object.FindObjectsOfType<CinemachineInputAxisController>(true);
         cachedCinemachineInputControllersEnabled = new bool[cachedCinemachineInputControllers.Length];
     }
@@ -212,9 +364,6 @@ public class ControlManager : MonoBehaviour
     private void SetControlState(bool isPlayer)
     {
         isPlayerControlActive = isPlayer;
-
-        if (playerInput != null) playerInput.enabled = !isInputLocked && isPlayer;
-        if (robotInput != null) robotInput.enabled = !isInputLocked && !isPlayer;
 
         if (playerCamera != null)
             playerCamera.Priority = isPlayer ? activeCameraPriority : inactiveCameraPriority;
@@ -242,6 +391,8 @@ public class ControlManager : MonoBehaviour
             fxDelayRoutine = StartCoroutine(ApplyTransitionAfterDelay(isPlayer ? 0f : 1f, !isPlayer));
 
         ControlStateChanged?.Invoke(isPlayerControlActive);
+
+        SyncGameplayInputLookAndCursor();
     }
 
     private IEnumerator ApplyTransitionAfterDelay(float nextTargetWeight, bool showPodUi)

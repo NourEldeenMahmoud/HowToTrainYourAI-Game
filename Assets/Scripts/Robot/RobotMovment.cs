@@ -47,6 +47,21 @@ public class RobotMovement : MonoBehaviour
         Cursor.visible = false;
     }
 
+    public void SetMovementEnabled(bool value)
+    {
+        enabled = value;
+        if (!value)
+        {
+            moveInput = Vector2.zero;
+            isSprinting = false;
+            if (anim != null)
+            {
+                anim.SetBool("IsWalking", false);
+                anim.SetBool("IsSprinting", false);
+            }
+        }
+    }
+
     public void OnMove(InputValue value)
     {
         moveInput = value.Get<Vector2>();
