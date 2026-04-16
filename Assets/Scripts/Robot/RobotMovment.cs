@@ -7,12 +7,11 @@ public class RobotMovement : MonoBehaviour
     [Header("References")]
     public Transform orientation;
     public Transform robotObj;
+    [SerializeField] private MiniGame1FaultState miniGameFaultState;
+    [SerializeField] private RobotStabilityApplier stabilityApplier;
 
     private CharacterController controller;
     private Animator anim;
-
-    [Header("MiniGame Fault Injection (optional)")]
-    [SerializeField] private MiniGame1FaultState miniGameFaults;
 
     [Header("Movement Settings")]
     public float walkSpeed = 2.5f;
@@ -32,10 +31,14 @@ public class RobotMovement : MonoBehaviour
         controller = GetComponent<CharacterController>();
         anim = robotObj != null ? robotObj.GetComponentInParent<Animator>() : GetComponentInChildren<Animator>();
 
-        if (miniGameFaults == null)
-        {
-            miniGameFaults = GetComponent<MiniGame1FaultState>();
-        }
+        if (miniGameFaultState == null)
+            miniGameFaultState = GetComponent<MiniGame1FaultState>();
+
+        if (stabilityApplier == null)
+            stabilityApplier = GetComponent<RobotStabilityApplier>();
+
+        if (stabilityApplier == null)
+            stabilityApplier = gameObject.AddComponent<RobotStabilityApplier>();
 
         if (anim != null)
             anim.applyRootMotion = false;
@@ -80,9 +83,13 @@ public class RobotMovement : MonoBehaviour
         Vector3 forward = orientation.forward;
         Vector3 right = orientation.right;
 
-        if (miniGameFaults != null && miniGameFaults.faultsEnabled && Mathf.Abs(miniGameFaults.yawDriftDeg) > 0.01f)
+        float persistentYawDrift = stabilityApplier != null ? stabilityApplier.GetYawDriftDegrees() : 0f;
+        float miniGameYawDrift = (miniGameFaultState != null && miniGameFaultState.faultsEnabled) ? miniGameFaultState.yawDriftDeg : 0f;
+        float totalYawDrift = persistentYawDrift + miniGameYawDrift;
+
+        if (Mathf.Abs(totalYawDrift) > 0.01f)
         {
-            Quaternion driftRot = Quaternion.Euler(0f, miniGameFaults.yawDriftDeg, 0f);
+            Quaternion driftRot = Quaternion.Euler(0f, totalYawDrift, 0f);
             forward = driftRot * forward;
             right = driftRot * right;
         }
@@ -94,10 +101,12 @@ public class RobotMovement : MonoBehaviour
         bool shouldSprint = hasMoveInput && isSprinting;
 
         float targetSpeed = hasMoveInput ? (shouldSprint ? runSpeed : walkSpeed) : 0f;
-        if (miniGameFaults != null && miniGameFaults.faultsEnabled)
-        {
-            targetSpeed *= miniGameFaults.GetSpeedMultiplier();
-        }
+        if (stabilityApplier != null)
+            targetSpeed *= stabilityApplier.GetSpeedMultiplier();
+
+        if (miniGameFaultState != null && miniGameFaultState.faultsEnabled)
+            targetSpeed *= miniGameFaultState.GetSpeedMultiplier();
+
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * speedSmooth);
 
         if (anim != null)

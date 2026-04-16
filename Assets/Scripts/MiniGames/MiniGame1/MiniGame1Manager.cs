@@ -1,8 +1,23 @@
 using System.Collections;
+using System;
 using UnityEngine;
 
 public class MiniGame1Manager : MonoBehaviour
 {
+    public enum MiniGame1Phase
+    {
+        None,
+        FreeMoveInitial,
+        DriftLeft,
+        FreeMoveBetween_DriftLeft_DriftRight,
+        DriftRight,
+        FreeMoveBetween_DriftRight_Camera,
+        CameraAlignment,
+        FreeMoveBetween_Camera_Speed,
+        SpeedConsistency,
+        Completed
+    }
+
     [Header("Data Assets")]
     [SerializeField] private MiniGame1LearningProfileSO learningProfile;
     [SerializeField] private RobotStatsSO robotStats;
@@ -16,6 +31,10 @@ public class MiniGame1Manager : MonoBehaviour
     [SerializeField] private DriftChallenge driftRight;
     [SerializeField] private CameraAlignmentChallenge cameraAlignment;
     [SerializeField] private SpeedConsistencyChallenge speedConsistency;
+
+    [Header("Challenges Auto-Resolve (optional)")]
+    [Tooltip("If set, the manager will auto-pick challenges from this object (and children) when references are missing/duplicated.")]
+    [SerializeField] private Transform challengesRoot;
 
     [Header("Flow")]
     [Tooltip("If true, auto-starts the mini game on Start().")]
@@ -31,8 +50,16 @@ public class MiniGame1Manager : MonoBehaviour
 
     private bool isRunning;
     private MiniGame1RawMetrics raw;
+    private MiniGame1Phase phase = MiniGame1Phase.None;
 
     public MiniGame1EvaluationResult LastResult { get; private set; }
+
+    public event Action<MiniGame1EvaluationResult> MiniGameCompleted;
+    public event Action<MiniGame1Phase> PhaseChanged;
+
+    public MiniGame1Phase CurrentPhase => phase;
+    public RobotStatsSO RobotStats => robotStats;
+    public bool HasPassedLastRun => LastResult.finalScore >= 50f;
 
     private void Start()
     {
@@ -45,23 +72,42 @@ public class MiniGame1Manager : MonoBehaviour
     public void StartMiniGame()
     {
         if (isRunning) return;
+        if (robotStats != null)
+        {
+            // Starting from scratch => clear any previously saved calibration result.
+            robotStats.ResetSavedCalibrationResult();
+        }
         StartCoroutine(RunSequence());
+    }
+
+    private void SetPhase(MiniGame1Phase next)
+    {
+        if (phase == next) return;
+        phase = next;
+        PhaseChanged?.Invoke(phase);
     }
 
     private IEnumerator RunSequence()
     {
         isRunning = true;
         raw.Reset();
+        SetPhase(MiniGame1Phase.None);
+
+        ResolveChallenges();
 
         if (enableLogging)
         {
             Debug.Log("[MG1] RunSequence start");
             Debug.Log($"[MG1] Refs profile={(learningProfile != null ? learningProfile.name : "NULL")}, robotStats={(robotStats != null ? robotStats.name : "NULL")}, trackProgress={(trackProgress != null ? trackProgress.name : "NULL")}");
+            string left = driftLeft != null ? driftLeft.driftAngleDeg.ToString("F1") : "NULL";
+            string right = driftRight != null ? driftRight.driftAngleDeg.ToString("F1") : "NULL";
+            Debug.Log($"[MG1] Challenges driftLeft={left}, driftRight={right}, cam={(cameraAlignment != null ? "OK" : "NULL")}, speed={(speedConsistency != null ? "OK" : "NULL")}");
         }
 
         if (initialFreeMoveSeconds > 0f)
         {
             if (enableLogging) Debug.Log($"[MG1] FreeMove (initial) {initialFreeMoveSeconds:F1}s");
+            SetPhase(MiniGame1Phase.FreeMoveInitial);
             yield return new WaitForSeconds(initialFreeMoveSeconds);
         }
 
@@ -75,6 +121,7 @@ public class MiniGame1Manager : MonoBehaviour
         if (driftLeft != null)
         {
             if (enableLogging) Debug.Log("[MG1] DriftLeft begin");
+            SetPhase(MiniGame1Phase.DriftLeft);
             driftLeft.BeginChallenge();
             yield return WaitUntilComplete(driftLeft);
             driftLeft.ContributeToMetrics(ref raw);
@@ -85,12 +132,14 @@ public class MiniGame1Manager : MonoBehaviour
         if (freeMoveBetweenChallengesSeconds > 0f)
         {
             if (enableLogging) Debug.Log($"[MG1] FreeMove (between) {freeMoveBetweenChallengesSeconds:F1}s");
+            SetPhase(MiniGame1Phase.FreeMoveBetween_DriftLeft_DriftRight);
             yield return new WaitForSeconds(freeMoveBetweenChallengesSeconds);
         }
 
         if (driftRight != null)
         {
             if (enableLogging) Debug.Log("[MG1] DriftRight begin");
+            SetPhase(MiniGame1Phase.DriftRight);
             driftRight.BeginChallenge();
             yield return WaitUntilComplete(driftRight);
             driftRight.ContributeToMetrics(ref raw);
@@ -102,12 +151,14 @@ public class MiniGame1Manager : MonoBehaviour
         if (freeMoveBetweenChallengesSeconds > 0f)
         {
             if (enableLogging) Debug.Log($"[MG1] FreeMove (between) {freeMoveBetweenChallengesSeconds:F1}s");
+            SetPhase(MiniGame1Phase.FreeMoveBetween_DriftRight_Camera);
             yield return new WaitForSeconds(freeMoveBetweenChallengesSeconds);
         }
 
         if (cameraAlignment != null)
         {
             if (enableLogging) Debug.Log("[MG1] CameraAlignment begin");
+            SetPhase(MiniGame1Phase.CameraAlignment);
             cameraAlignment.BeginChallenge();
             yield return WaitUntilComplete(cameraAlignment);
             cameraAlignment.ContributeToMetrics(ref raw);
@@ -118,12 +169,14 @@ public class MiniGame1Manager : MonoBehaviour
         if (freeMoveBetweenChallengesSeconds > 0f)
         {
             if (enableLogging) Debug.Log($"[MG1] FreeMove (between) {freeMoveBetweenChallengesSeconds:F1}s");
+            SetPhase(MiniGame1Phase.FreeMoveBetween_Camera_Speed);
             yield return new WaitForSeconds(freeMoveBetweenChallengesSeconds);
         }
 
         if (speedConsistency != null)
         {
             if (enableLogging) Debug.Log("[MG1] SpeedConsistency begin");
+            SetPhase(MiniGame1Phase.SpeedConsistency);
             speedConsistency.BeginChallenge();
             yield return WaitUntilComplete(speedConsistency);
             speedConsistency.ContributeToMetrics(ref raw);
@@ -158,6 +211,49 @@ public class MiniGame1Manager : MonoBehaviour
 
         isRunning = false;
         if (enableLogging) Debug.Log("[MG1] RunSequence end");
+
+        SetPhase(MiniGame1Phase.Completed);
+
+        if (enableLogging) Debug.Log("[MG1] Invoking MiniGameCompleted event");
+        MiniGameCompleted?.Invoke(LastResult);
+    }
+
+    private void ResolveChallenges()
+    {
+        // 1) Prefer an explicit root if provided.
+        Transform root = challengesRoot;
+        if (root == null)
+        {
+            // 2) Fallback: infer from any assigned challenge.
+            if (driftLeft != null) root = driftLeft.transform;
+            else if (driftRight != null) root = driftRight.transform;
+            else if (cameraAlignment != null) root = cameraAlignment.transform;
+            else if (speedConsistency != null) root = speedConsistency.transform;
+        }
+
+        if (root == null) return;
+
+        // If drift references are missing or duplicated, pick the first two DriftChallenge components we can find.
+        if (driftLeft == null || driftRight == null || driftLeft == driftRight)
+        {
+            DriftChallenge[] drifts = root.GetComponentsInChildren<DriftChallenge>(true);
+            if (drifts != null && drifts.Length > 0)
+            {
+                driftLeft = drifts[0];
+                driftRight = drifts.Length > 1 ? drifts[1] : null;
+            }
+        }
+
+        // If other references are missing, try to resolve them too (first match wins).
+        if (cameraAlignment == null)
+        {
+            cameraAlignment = root.GetComponentInChildren<CameraAlignmentChallenge>(true);
+        }
+
+        if (speedConsistency == null)
+        {
+            speedConsistency = root.GetComponentInChildren<SpeedConsistencyChallenge>(true);
+        }
     }
 
     private static IEnumerator WaitUntilComplete(DriftChallenge drift)
