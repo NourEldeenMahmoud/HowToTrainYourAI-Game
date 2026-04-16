@@ -26,6 +26,11 @@ public class MiniGame1ResultScreenUI : MonoBehaviour
     [SerializeField] private Button applyImprovementsButton;
     [SerializeField] private Button recalibrateButton;
 
+    [Header("UI - Bars (Scrollbars)")]
+    [SerializeField] private Scrollbar speedBar;
+    [SerializeField] private Scrollbar cameraBar;
+    [SerializeField] private Scrollbar driftBar;
+
     [Header("Behavior")]
     [Tooltip("While the result screen is visible, disable player/robot inputs and hide POV UI.")]
     [SerializeField] private bool lockControlsWhileVisible = true;
@@ -105,6 +110,31 @@ public class MiniGame1ResultScreenUI : MonoBehaviour
         if (driftScoreText != null) driftScoreText.text = $"{Mathf.RoundToInt(r.challengeScores.driftScore)}%";
         if (cameraScoreText != null) cameraScoreText.text = $"{Mathf.RoundToInt(r.challengeScores.cameraScore)}%";
         if (speedScoreText != null) speedScoreText.text = $"{Mathf.RoundToInt(r.challengeScores.speedScore)}%";
+
+        // Bars are implemented as Scrollbars in the imported UI prefab.
+        // IMPORTANT: This prefab uses a big default Handle Size, so changing only "value"
+        // makes even low scores look large. We treat the handle as a progress fill:
+        // - size = normalized score (0..1)
+        // - value = 1 (pin fill to the right/end)
+        ApplyBar(speedBar, r.challengeScores.speedScore);
+        ApplyBar(cameraBar, r.challengeScores.cameraScore);
+        ApplyBar(driftBar, r.challengeScores.driftScore);
+    }
+
+    private static void ApplyBar(Scrollbar bar, float score0To100)
+    {
+        if (bar == null) return;
+        float t = Mathf.Clamp01(score0To100 / 100f);
+        // Don't set interactable=false because it forces DisabledColor (greys out).
+        // Instead, keep visuals as-is and just prevent navigation.
+        bar.interactable = true;
+        var nav = bar.navigation;
+        nav.mode = Navigation.Mode.None;
+        bar.navigation = nav;
+        // Treat handle as progress fill from LEFT to RIGHT.
+        bar.direction = Scrollbar.Direction.LeftToRight;
+        bar.size = t;
+        bar.value = 0f;
     }
 
     private void OnApplyImprovementsClicked()
@@ -148,6 +178,12 @@ public class MiniGame1ResultScreenUI : MonoBehaviour
 
         if (recalibrateButton == null)
             recalibrateButton = FindButtonWithLabel(root, "Recalibrate Movement");
+
+        // Performance bars: three Scrollbars named (top to bottom): Scrollbar, Scrollbar (1), Scrollbar (2)
+        // They align with the three challenge score rows.
+        if (speedBar == null) speedBar = FindScrollbarByName(root, "Scrollbar");
+        if (cameraBar == null) cameraBar = FindScrollbarByName(root, "Scrollbar (1)");
+        if (driftBar == null) driftBar = FindScrollbarByName(root, "Scrollbar (2)");
     }
 
     private void RebindButtons()
@@ -208,6 +244,22 @@ public class MiniGame1ResultScreenUI : MonoBehaviour
 
             Button b = tmp.GetComponentInParent<Button>();
             if (b != null) return b;
+        }
+
+        return null;
+    }
+
+    private static Scrollbar FindScrollbarByName(Transform root, string goName)
+    {
+        if (root == null) return null;
+
+        Transform t = root.Find(goName);
+        if (t != null) return t.GetComponent<Scrollbar>();
+
+        Scrollbar[] all = root.GetComponentsInChildren<Scrollbar>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            if (all[i] != null && all[i].gameObject.name == goName) return all[i];
         }
 
         return null;

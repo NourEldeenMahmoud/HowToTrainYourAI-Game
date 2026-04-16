@@ -484,6 +484,9 @@ MonoBehaviour:
   speedScoreText: {fileID: 0}
   applyImprovementsButton: {fileID: 0}
   recalibrateButton: {fileID: 0}
+  speedBar: {fileID: 0}
+  cameraBar: {fileID: 0}
+  driftBar: {fileID: 0}
   lockControlsWhileVisible: 1
 --- !u!114 &207022494
 MonoBehaviour:
@@ -1028,7 +1031,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraAlignmentChallenge
   cameraTransform: {fileID: 1116111710}
-  orbitalFollow: {fileID: 0}
+  orbitalFollow: {fileID: 1858142788}
   cameraPitchPivot: {fileID: 0}
   injectedPitchOffsetDeg: 25
   targetPitchDeg: 0
@@ -2619,6 +2622,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2121350305853752516, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+      propertyPath: m_ControllerManager.Controllers.Array.data[1].Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2441466090888364940, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: playerCamera
       value: 
@@ -2627,29 +2634,57 @@ PrefabInstance:
       propertyPath: interactPromptText
       value: 
       objectReference: {fileID: 469270962}
+    - target: {fileID: 4464767900259960369, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+      propertyPath: Orbits.Top.Height
+      value: 2.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4464767900259960369, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+      propertyPath: Orbits.Top.Radius
+      value: 3.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4464767900259960369, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+      propertyPath: Orbits.Bottom.Height
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4464767900259960369, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+      propertyPath: Orbits.Bottom.Radius
+      value: 3.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4464767900259960369, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+      propertyPath: Orbits.Center.Height
+      value: 1.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4464767900259960369, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+      propertyPath: Orbits.Center.Radius
+      value: 3.2
+      objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -4.0676336
+      value: -3.224613
+      objectReference: {fileID: 0}
+    - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.8582264
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.13305283
+      value: 0.10547757
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.69157785
+      value: 0.6801843
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.07330645
+      value: 0.14492403
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.71456933
+      value: 0.70279706
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.07574352
+      value: -0.14974202
       objectReference: {fileID: 0}
     - target: {fileID: 8879564628621791510, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_Name
@@ -3283,6 +3318,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
+--- !u!114 &1858142788 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4464767900259960369, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+  m_PrefabInstance: {fileID: 1462924977}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b5d7c088409d9a40b7b09aa707777f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineOrbitalFollow
 --- !u!1 &1920871396
 GameObject:
   m_ObjectHideFlags: 0

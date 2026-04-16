@@ -4,6 +4,7 @@ public class RobotStabilityApplier : MonoBehaviour
 {
     [Header("Data")]
     [SerializeField] private RobotStatsSO robotStats;
+    private MiniGame1Manager miniGame1Manager;
 
     [Header("Drift (movement)")]
     [Tooltip("Max yaw drift in degrees when driftErrorRate = 1.")]
@@ -17,7 +18,8 @@ public class RobotStabilityApplier : MonoBehaviour
 
     public float GetYawDriftDegrees()
     {
-        if (robotStats == null) return 0f;
+        EnsureRobotStats();
+        if (robotStats == null || !robotStats.hasSavedCalibrationResult) return 0f;
         float rate = robotStats.driftErrorRate;
         float osc = Mathf.Sin(Time.time * Mathf.PI * 2f * driftOscillationHz);
         return osc * maxYawDriftDeg * rate;
@@ -25,10 +27,26 @@ public class RobotStabilityApplier : MonoBehaviour
 
     public float GetSpeedMultiplier()
     {
-        if (robotStats == null) return 1f;
+        EnsureRobotStats();
+        if (robotStats == null || !robotStats.hasSavedCalibrationResult) return 1f;
         float rate = robotStats.speedErrorRate;
         float osc = Mathf.Sin(Time.time * Mathf.PI * 2f * speedWobbleHz);
         return 1f + (osc * maxSpeedWobble * rate);
+    }
+
+    private void EnsureRobotStats()
+    {
+        if (robotStats != null) return;
+
+        if (miniGame1Manager == null)
+        {
+            miniGame1Manager = FindFirstObjectByType<MiniGame1Manager>();
+        }
+
+        if (miniGame1Manager != null)
+        {
+            robotStats = miniGame1Manager.RobotStats;
+        }
     }
 }
 

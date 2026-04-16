@@ -58,6 +58,8 @@ public class MiniGame1Manager : MonoBehaviour
     public event Action<MiniGame1Phase> PhaseChanged;
 
     public MiniGame1Phase CurrentPhase => phase;
+    public RobotStatsSO RobotStats => robotStats;
+    public bool HasPassedLastRun => LastResult.finalScore >= 50f;
 
     private void Start()
     {
@@ -70,6 +72,11 @@ public class MiniGame1Manager : MonoBehaviour
     public void StartMiniGame()
     {
         if (isRunning) return;
+        if (robotStats != null)
+        {
+            // Starting from scratch => clear any previously saved calibration result.
+            robotStats.ResetSavedCalibrationResult();
+        }
         StartCoroutine(RunSequence());
     }
 

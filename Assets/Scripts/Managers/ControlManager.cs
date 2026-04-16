@@ -41,6 +41,9 @@ public class ControlManager : MonoBehaviour
     private bool[] cachedCinemachineInputControllersEnabled;
     private float targetFxWeight;
     private Coroutine fxDelayRoutine;
+    private MiniGame1Manager miniGame1Manager;
+    private CinemachineOrbitalFollow robotCameraOrbitalFollow;
+    private float lastRobotCameraOffset;
 
     private void Awake()
     {
@@ -85,6 +88,7 @@ public class ControlManager : MonoBehaviour
     private void Update()
     {
         UpdateTimeText();
+        ApplyRobotCameraInstability();
 
         if (podFxVolume == null)
         {
@@ -96,6 +100,50 @@ public class ControlManager : MonoBehaviour
             targetFxWeight,
             fxBlendSpeed * Time.deltaTime
         );
+    }
+
+    private void ApplyRobotCameraInstability()
+    {
+        if (robotCamera == null)
+        {
+            return;
+        }
+
+        if (robotCameraOrbitalFollow == null)
+        {
+            robotCameraOrbitalFollow = robotCamera.GetComponent<CinemachineOrbitalFollow>();
+            if (robotCameraOrbitalFollow == null)
+            {
+                return;
+            }
+        }
+
+        if (miniGame1Manager == null)
+        {
+            miniGame1Manager = FindFirstObjectByType<MiniGame1Manager>();
+        }
+
+        RobotStatsSO robotStats = miniGame1Manager != null ? miniGame1Manager.RobotStats : null;
+        bool shouldApply =
+            robotStats != null &&
+            robotStats.hasSavedCalibrationResult &&
+            !isPlayerControlActive &&
+            !isInputLocked;
+
+        float nextOffset = 0f;
+        if (shouldApply)
+        {
+            nextOffset = Mathf.Sin(Time.time * Mathf.PI * 2f * 0.35f) * 10f * robotStats.cameraErrorRate;
+        }
+
+        float currentValueWithoutPreviousOffset = robotCameraOrbitalFollow.VerticalAxis.Value - lastRobotCameraOffset;
+        robotCameraOrbitalFollow.VerticalAxis.Value = Mathf.Clamp(
+            currentValueWithoutPreviousOffset + nextOffset,
+            robotCameraOrbitalFollow.VerticalAxis.Range.x,
+            robotCameraOrbitalFollow.VerticalAxis.Range.y
+        );
+
+        lastRobotCameraOffset = nextOffset;
     }
 
     public void ToggleControl()
