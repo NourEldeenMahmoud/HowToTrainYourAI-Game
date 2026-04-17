@@ -1,12 +1,14 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 public class PlayerInteractor : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Camera playerCamera;
-    [SerializeField] private TMP_Text interactPromptText;
+    [Tooltip("Root of the interact hint in the HUD (e.g. button + TMP children). Shown only when an interactable is in range and aimed at.")]
+    [FormerlySerializedAs("interactPromptText")]
+    [SerializeField] private GameObject interactActionUi;
 
     [Header("Interaction")]
     [SerializeField] private float interactDistance = 3f;
@@ -17,7 +19,7 @@ public class PlayerInteractor : MonoBehaviour
     private void Update()
     {
         DetectInteractable();
-        UpdatePrompt();
+        UpdateInteractUi();
     }
 
     public void OnInteract(InputValue value)
@@ -48,24 +50,18 @@ public class PlayerInteractor : MonoBehaviour
         }
     }
 
-    private void UpdatePrompt()
+    private void UpdateInteractUi()
     {
-        if (interactPromptText == null || playerCamera == null) return;
+        if (interactActionUi == null) return;
 
-        bool canInteract = currentInteractable != null;
-        if (!canInteract)
+        bool show = currentInteractable != null;
+        if (show && playerCamera != null)
         {
-            HidePrompt();
-            return;
+            Vector3 screenPos = playerCamera.WorldToScreenPoint(currentInteractable.PromptWorldPosition);
+            show = screenPos.z > 0f;
         }
 
-        Vector3 screenPos = playerCamera.WorldToScreenPoint(currentInteractable.PromptWorldPosition);
-        bool isInFront = screenPos.z > 0f;
-        interactPromptText.gameObject.SetActive(isInFront);
-        if (!isInFront) return;
-
-        interactPromptText.transform.position = screenPos;
-        interactPromptText.text = currentInteractable.InteractPrompt;
+        interactActionUi.SetActive(show);
     }
 
     private void TryInteract()
@@ -73,11 +69,5 @@ public class PlayerInteractor : MonoBehaviour
         if (currentInteractable == null) return;
 
         currentInteractable.Interact();
-    }
-
-    private void HidePrompt()
-    {
-        interactPromptText.gameObject.SetActive(false);
-        interactPromptText.text = string.Empty;
     }
 }

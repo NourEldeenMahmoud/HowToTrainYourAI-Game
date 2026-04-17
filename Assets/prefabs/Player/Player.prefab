@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 6073807316281876730}
   - component: {fileID: 3478488754338654575}
   - component: {fileID: 1926031714489545150}
+  - component: {fileID: 8765432109876543210}
   m_Layer: 0
   m_Name: Player FreeLook Camera
   m_TagString: Untagged
@@ -21,6 +22,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &8765432109876543210
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1696857483910127899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5e7f9a1b3d5e7f9a1b3d5e7f9a1b3d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCameraLookInput
+  horizontalSensitivity: 0.15
+  verticalSensitivity: 0.1
 --- !u!4 &8435223457196011364
 Transform:
   m_ObjectHideFlags: 0
@@ -98,7 +113,7 @@ MonoBehaviour:
     AngularDampingMode: 0
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
-  OrbitStyle: 1
+  OrbitStyle: 0
   Radius: 5
   Orbits:
     Top:
@@ -207,7 +222,7 @@ MonoBehaviour:
     Controllers:
     - Name: Look Orbit X
       Owner: {fileID: 6521605986837855468}
-      Enabled: 1
+      Enabled: 0
       Input:
         InputAction: {fileID: -5630151704836100654, guid: 1d6e640e716dc4ff6989b73d02023f2b, type: 3}
         Gain: 1
@@ -233,7 +248,7 @@ MonoBehaviour:
         DecelTime: 0.2
     - Name: Orbit Scale
       Owner: {fileID: 6521605986837855468}
-      Enabled: 1
+      Enabled: 0
       Input:
         InputAction: {fileID: 5082991133974614888, guid: 1d6e640e716dc4ff6989b73d02023f2b, type: 3}
         Gain: -1
@@ -459,7 +474,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
   playerCamera: {fileID: 0}
-  interactPromptText: {fileID: 0}
+  interactActionUi: {fileID: 0}
   interactDistance: 7
   interactLayers:
     serializedVersion: 2

@@ -10,7 +10,7 @@ public class SimpleInteractable : MonoBehaviour
     public Vector3 PromptWorldPosition =>
         promptAnchor != null ? promptAnchor.position : transform.position + Vector3.up * promptHeightOffset;
 
-    public void Interact()
+    public virtual void Interact()
     {
         Debug.Log($"Interacted with: {gameObject.name}");
     }
