@@ -237,6 +237,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 873515633540503383, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+      propertyPath: verticalSensitivity
+      value: 0.04
+      objectReference: {fileID: 0}
+    - target: {fileID: 873515633540503383, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+      propertyPath: horizontalSensitivity
+      value: 0.05
+      objectReference: {fileID: 0}
     - target: {fileID: 1399726580578251028, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4.863878
@@ -319,31 +327,31 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.224613
+      value: -4.766036
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.8582264
+      value: 1.9215289
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.10547757
+      value: 0.15589762
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.6801843
+      value: 0.68735814
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.14492403
+      value: 0.10579455
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.70279706
+      value: 0.71020937
       objectReference: {fileID: 0}
     - target: {fileID: 8111788545066031380, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.14974202
+      value: -0.109311685
       objectReference: {fileID: 0}
     - target: {fileID: 8879564628621791510, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
       propertyPath: m_Name
@@ -368,6 +376,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14528cc5e22d71b4f927bb6381173fef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RobotMovement
+--- !u!114 &112731554 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9088202008134822984, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+  m_PrefabInstance: {fileID: 979722069}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &145480825 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7843573096829958367, guid: 0890581e83f3eb64f95d56081cadc45e, type: 3}
@@ -580,6 +599,17 @@ Transform:
   - {fileID: 1995968230}
   m_Father: {fileID: 501407591}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &169845226 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1560126167916807278, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+  m_PrefabInstance: {fileID: 979722069}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Scrollbar
 --- !u!1 &238000123 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3064604779145499418, guid: dfc5e48c9e15ed449ba9ec89e357c1cf, type: 3}
@@ -596,6 +626,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+--- !u!114 &256153307 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2797085083614339215, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+  m_PrefabInstance: {fileID: 979722069}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Scrollbar
 --- !u!1001 &262176395
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -714,6 +755,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 615017687}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &301217386 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 781756249880516224, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+  m_PrefabInstance: {fileID: 979722069}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a4db7a114972834c8e4117be1d82ba3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Scrollbar
 --- !u!1 &501407590
 GameObject:
   m_ObjectHideFlags: 0
@@ -865,6 +917,7 @@ GameObject:
   - component: {fileID: 612588600}
   - component: {fileID: 612588599}
   - component: {fileID: 612588598}
+  - component: {fileID: 612588602}
   m_Layer: 0
   m_Name: MG1_Manager
   m_TagString: Untagged
@@ -904,16 +957,16 @@ MonoBehaviour:
   resultScreenRoot: {fileID: 1302569938}
   controlManager: {fileID: 1508068331}
   autoFindOnEnable: 1
-  finalScoreText: {fileID: 0}
-  tierText: {fileID: 0}
-  driftScoreText: {fileID: 0}
-  cameraScoreText: {fileID: 0}
-  speedScoreText: {fileID: 0}
-  applyImprovementsButton: {fileID: 0}
-  recalibrateButton: {fileID: 0}
-  speedBar: {fileID: 0}
-  cameraBar: {fileID: 0}
-  driftBar: {fileID: 0}
+  finalScoreText: {fileID: 1563110828}
+  tierText: {fileID: 1218975460}
+  driftScoreText: {fileID: 112731554}
+  cameraScoreText: {fileID: 1540055292}
+  speedScoreText: {fileID: 1888667398}
+  applyImprovementsButton: {fileID: 1665779801}
+  recalibrateButton: {fileID: 783619760}
+  speedBar: {fileID: 256153307}
+  cameraBar: {fileID: 169845226}
+  driftBar: {fileID: 301217386}
   lockControlsWhileVisible: 1
 --- !u!114 &612588600
 MonoBehaviour:
@@ -955,6 +1008,27 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &612588602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 612588597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d67e2a078cad73e4faac3fac152a4cd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MiniGame1RobotPovUI
+  miniGame1Manager: {fileID: 612588600}
+  povUiRoot: {fileID: 2033991677}
+  challengeNameText: {fileID: 1218975460}
+  promptText: {fileID: 1315891330}
+  logText: {fileID: 1727720553}
+  clockText: {fileID: 0}
+  autoFind: 1
+  maxLogLines: 8
+  maxCharsPerLine: 28
 --- !u!1 &615017686
 GameObject:
   m_ObjectHideFlags: 0
@@ -1107,6 +1181,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8879564628621791510, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
   m_PrefabInstance: {fileID: 89088457}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &761745863 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1399726580578251028, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+  m_PrefabInstance: {fileID: 89088457}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &761745864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1134,6 +1213,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
+--- !u!114 &783619760 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6725137443313071660, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+  m_PrefabInstance: {fileID: 979722069}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1 &803819171
 GameObject:
   m_ObjectHideFlags: 0
@@ -1245,8 +1335,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 947641570}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.19101234, y: -0.00000007612663, z: 0.000000014813884, w: 0.98158765}
-  m_LocalPosition: {x: -0.31, y: 3.4125552, z: 13.565458}
+  m_LocalRotation: {x: 0.15212339, y: 0.0000000054647247, z: -8.411017e-10, w: 0.98836154}
+  m_LocalPosition: {x: -0.31, y: 3.3245292, z: 12.731415}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1352,6 +1442,26 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 487911664065746453, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: 'Drift Scrollbar '
+      objectReference: {fileID: 0}
+    - target: {fileID: 829077640181807195, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: Drift Percentage
+      objectReference: {fileID: 0}
+    - target: {fileID: 1319387095853093049, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: 'Apply Button '
+      objectReference: {fileID: 0}
+    - target: {fileID: 1853966011515028731, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: 'Steering Scrollbar '
+      objectReference: {fileID: 0}
+    - target: {fileID: 3084134686865825818, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: Speed Scrollbar
+      objectReference: {fileID: 0}
     - target: {fileID: 4180289847172873670, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -1432,6 +1542,26 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4580175292496994825, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: Restart Text
+      objectReference: {fileID: 0}
+    - target: {fileID: 4756216104855260671, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: Final Score Percentage
+      objectReference: {fileID: 0}
+    - target: {fileID: 5182666125301981261, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: Restart Button
+      objectReference: {fileID: 0}
+    - target: {fileID: 5461089393224935871, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: Steering Percentage
+      objectReference: {fileID: 0}
+    - target: {fileID: 6199503161051899572, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: Speed Percentage
+      objectReference: {fileID: 0}
     - target: {fileID: 6535107664613578435, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0.8
@@ -1439,6 +1569,10 @@ PrefabInstance:
     - target: {fileID: 6535107664613578435, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6752168485483349553, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+      propertyPath: m_Name
+      value: Apply Text
       objectReference: {fileID: 0}
     - target: {fileID: 7622005508095930914, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
       propertyPath: m_AnchorMax.x
@@ -1669,6 +1803,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
+--- !u!114 &1218975460 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8644577133376500140, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+  m_PrefabInstance: {fileID: 1569210290}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &1246648965
 GameObject:
   m_ObjectHideFlags: 0
@@ -1916,11 +2061,46 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 8435223457196011364, guid: 512744112544e174cb8f9bfffdbfd1a4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.904529
+      objectReference: {fileID: 0}
+    - target: {fileID: 8435223457196011364, guid: 512744112544e174cb8f9bfffdbfd1a4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -4.768585
+      objectReference: {fileID: 0}
+    - target: {fileID: 8435223457196011364, guid: 512744112544e174cb8f9bfffdbfd1a4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.98836154
+      objectReference: {fileID: 0}
+    - target: {fileID: 8435223457196011364, guid: 512744112544e174cb8f9bfffdbfd1a4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.15212339
+      objectReference: {fileID: 0}
+    - target: {fileID: 8435223457196011364, guid: 512744112544e174cb8f9bfffdbfd1a4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.0000000054647256
+      objectReference: {fileID: 0}
+    - target: {fileID: 8435223457196011364, guid: 512744112544e174cb8f9bfffdbfd1a4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -8.411017e-10
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 512744112544e174cb8f9bfffdbfd1a4, type: 3}
+--- !u!114 &1315891330 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 828035154602708516, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+  m_PrefabInstance: {fileID: 1569210290}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &1342959850
 GameObject:
   m_ObjectHideFlags: 0
@@ -2310,6 +2490,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
+--- !u!114 &1540055292 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2417818489445739655, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+  m_PrefabInstance: {fileID: 979722069}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+--- !u!114 &1563110828 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6733737715314770471, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+  m_PrefabInstance: {fileID: 979722069}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1001 &1564957111
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2425,6 +2627,10 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1032850450840645452, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+      propertyPath: m_Name
+      value: 'Error MessageText '
+      objectReference: {fileID: 0}
     - target: {fileID: 1460635522272432860, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -2475,15 +2681,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1460635522272432860, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
       propertyPath: m_LocalRotation.x
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1460635522272432860, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1460635522272432860, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1460635522272432860, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -2505,9 +2711,37 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3113374554293971136, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+      propertyPath: m_fontSize
+      value: 28
+      objectReference: {fileID: 0}
+    - target: {fileID: 3113374554293971136, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 28
+      objectReference: {fileID: 0}
     - target: {fileID: 4248649968461809498, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
       propertyPath: m_Name
       value: Message Button
+      objectReference: {fileID: 0}
+    - target: {fileID: 5911620135514273357, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+      propertyPath: m_Name
+      value: Challenge Instruction Text
+      objectReference: {fileID: 0}
+    - target: {fileID: 6664324252510000256, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 665.3638
+      objectReference: {fileID: 0}
+    - target: {fileID: 6664324252510000256, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 348.84686
+      objectReference: {fileID: 0}
+    - target: {fileID: 6664324252510000256, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 182
+      objectReference: {fileID: 0}
+    - target: {fileID: 7860578448823514474, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+      propertyPath: m_Name
+      value: Log Messages Text
       objectReference: {fileID: 0}
     - target: {fileID: 8832034967049224847, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
       propertyPath: m_Name
@@ -2516,6 +2750,10 @@ PrefabInstance:
     - target: {fileID: 8832034967049224847, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8972784369696622784, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+      propertyPath: m_Name
+      value: Logs Messages
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2712,6 +2950,17 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &1665779801 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7425832907315081851, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+  m_PrefabInstance: {fileID: 979722069}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1 &1675562682
 GameObject:
   m_ObjectHideFlags: 0
@@ -2884,6 +3133,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1727720553 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3113374554293971136, guid: 2a666b07d3a1a7a44842b21ae90fedd0, type: 3}
+  m_PrefabInstance: {fileID: 1569210290}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!114 &1766287740 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3962732198762921267, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
@@ -2895,6 +3155,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
+--- !u!114 &1766287745 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4464767900259960369, guid: c25ae289b65f9a345b87e60aeee8f4c6, type: 3}
+  m_PrefabInstance: {fileID: 89088457}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b5d7c088409d9a40b7b09aa707777f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineOrbitalFollow
 --- !u!1 &1775354504
 GameObject:
   m_ObjectHideFlags: 0
@@ -2942,8 +3213,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 125e28b1c76a8d74ebdbf51b63dcba53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpeedConsistencyChallenge
-  robotTransform: {fileID: 0}
-  faultState: {fileID: 0}
+  robotTransform: {fileID: 761745863}
+  faultState: {fileID: 761745864}
   targetSpeed: 1
   sampleWindowSeconds: 5
   injectedSpeedWobble: 0.15
@@ -2960,7 +3231,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraAlignmentChallenge
   cameraTransform: {fileID: 947641572}
-  orbitalFollow: {fileID: 0}
+  orbitalFollow: {fileID: 1766287745}
   cameraPitchPivot: {fileID: 0}
   injectedPitchOffsetDeg: 25
   targetPitchDeg: 0
@@ -2978,9 +3249,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d30f7c5c29138b44eb880c7a2d812b26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DriftChallenge
-  robotTransform: {fileID: 0}
+  robotTransform: {fileID: 761745863}
   trackProgress: {fileID: 1727504660}
-  faultState: {fileID: 0}
+  faultState: {fileID: 761745864}
   driftAngleDeg: 15
   challengeDurationSeconds: 6
   correctionStartThresholdDeg: 30
@@ -2997,9 +3268,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d30f7c5c29138b44eb880c7a2d812b26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DriftChallenge
-  robotTransform: {fileID: 0}
+  robotTransform: {fileID: 761745863}
   trackProgress: {fileID: 1727504660}
-  faultState: {fileID: 0}
+  faultState: {fileID: 761745864}
   driftAngleDeg: -15
   challengeDurationSeconds: 6
   correctionStartThresholdDeg: 30
@@ -3141,6 +3412,17 @@ RectTransform:
   m_AnchoredPosition: {x: -441.5, y: -279.625}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1888667398 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2066539429843537319, guid: 3d6ea9c853c04194f87d5cd20bfe8405, type: 3}
+  m_PrefabInstance: {fileID: 979722069}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1 &1995030686
 GameObject:
   m_ObjectHideFlags: 0

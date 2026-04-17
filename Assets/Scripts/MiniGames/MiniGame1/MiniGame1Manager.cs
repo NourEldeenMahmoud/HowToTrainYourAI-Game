@@ -56,6 +56,8 @@ public class MiniGame1Manager : MonoBehaviour
 
     public event Action<MiniGame1EvaluationResult> MiniGameCompleted;
     public event Action<MiniGame1Phase> PhaseChanged;
+    /// <summary>Fired for every log line when enableLogging is true. Subscribe in UI scripts to show in-game logs.</summary>
+    public event Action<string> LogMessage;
 
     public MiniGame1Phase CurrentPhase => phase;
     public RobotStatsSO RobotStats => robotStats;
@@ -80,6 +82,13 @@ public class MiniGame1Manager : MonoBehaviour
         StartCoroutine(RunSequence());
     }
 
+    private void Log(string msg)
+    {
+        if (!enableLogging) return;
+        Debug.Log(msg);
+        LogMessage?.Invoke(msg);
+    }
+
     private void SetPhase(MiniGame1Phase next)
     {
         if (phase == next) return;
@@ -95,18 +104,15 @@ public class MiniGame1Manager : MonoBehaviour
 
         ResolveChallenges();
 
-        if (enableLogging)
-        {
-            Debug.Log("[MG1] RunSequence start");
-            Debug.Log($"[MG1] Refs profile={(learningProfile != null ? learningProfile.name : "NULL")}, robotStats={(robotStats != null ? robotStats.name : "NULL")}, trackProgress={(trackProgress != null ? trackProgress.name : "NULL")}");
-            string left = driftLeft != null ? driftLeft.driftAngleDeg.ToString("F1") : "NULL";
-            string right = driftRight != null ? driftRight.driftAngleDeg.ToString("F1") : "NULL";
-            Debug.Log($"[MG1] Challenges driftLeft={left}, driftRight={right}, cam={(cameraAlignment != null ? "OK" : "NULL")}, speed={(speedConsistency != null ? "OK" : "NULL")}");
-        }
+        Log("[MG1] RunSequence start");
+        Log($"[MG1] Refs profile={(learningProfile != null ? learningProfile.name : "NULL")}, robotStats={(robotStats != null ? robotStats.name : "NULL")}, trackProgress={(trackProgress != null ? trackProgress.name : "NULL")}");
+        string left = driftLeft != null ? driftLeft.driftAngleDeg.ToString("F1") : "NULL";
+        string right = driftRight != null ? driftRight.driftAngleDeg.ToString("F1") : "NULL";
+        Log($"[MG1] Challenges driftLeft={left}, driftRight={right}, cam={(cameraAlignment != null ? "OK" : "NULL")}, speed={(speedConsistency != null ? "OK" : "NULL")}");
 
         if (initialFreeMoveSeconds > 0f)
         {
-            if (enableLogging) Debug.Log($"[MG1] FreeMove (initial) {initialFreeMoveSeconds:F1}s");
+            Log($"[MG1] FreeMove (initial) {initialFreeMoveSeconds:F1}s");
             SetPhase(MiniGame1Phase.FreeMoveInitial);
             yield return new WaitForSeconds(initialFreeMoveSeconds);
         }
@@ -120,68 +126,68 @@ public class MiniGame1Manager : MonoBehaviour
 
         if (driftLeft != null)
         {
-            if (enableLogging) Debug.Log("[MG1] DriftLeft begin");
+            Log("[MG1] DriftLeft begin");
             SetPhase(MiniGame1Phase.DriftLeft);
             driftLeft.BeginChallenge();
             yield return WaitUntilComplete(driftLeft);
             driftLeft.ContributeToMetrics(ref raw);
             challengeScores.driftScore = driftLeft.GetScore0To100(learningProfile);
-            if (enableLogging) Debug.Log($"[MG1] DriftLeft end score={challengeScores.driftScore:F1}");
+            Log($"[MG1] DriftLeft end score={challengeScores.driftScore:F1}");
         }
 
         if (freeMoveBetweenChallengesSeconds > 0f)
         {
-            if (enableLogging) Debug.Log($"[MG1] FreeMove (between) {freeMoveBetweenChallengesSeconds:F1}s");
+            Log($"[MG1] FreeMove (between) {freeMoveBetweenChallengesSeconds:F1}s");
             SetPhase(MiniGame1Phase.FreeMoveBetween_DriftLeft_DriftRight);
             yield return new WaitForSeconds(freeMoveBetweenChallengesSeconds);
         }
 
         if (driftRight != null)
         {
-            if (enableLogging) Debug.Log("[MG1] DriftRight begin");
+            Log("[MG1] DriftRight begin");
             SetPhase(MiniGame1Phase.DriftRight);
             driftRight.BeginChallenge();
             yield return WaitUntilComplete(driftRight);
             driftRight.ContributeToMetrics(ref raw);
             float rightScore = driftRight.GetScore0To100(learningProfile);
             challengeScores.driftScore = Mathf.Clamp01((challengeScores.driftScore + rightScore) / 200f) * 100f;
-            if (enableLogging) Debug.Log($"[MG1] DriftRight end score={rightScore:F1} (combined driftScore={challengeScores.driftScore:F1})");
+            Log($"[MG1] DriftRight end score={rightScore:F1} (combined driftScore={challengeScores.driftScore:F1})");
         }
 
         if (freeMoveBetweenChallengesSeconds > 0f)
         {
-            if (enableLogging) Debug.Log($"[MG1] FreeMove (between) {freeMoveBetweenChallengesSeconds:F1}s");
+            Log($"[MG1] FreeMove (between) {freeMoveBetweenChallengesSeconds:F1}s");
             SetPhase(MiniGame1Phase.FreeMoveBetween_DriftRight_Camera);
             yield return new WaitForSeconds(freeMoveBetweenChallengesSeconds);
         }
 
         if (cameraAlignment != null)
         {
-            if (enableLogging) Debug.Log("[MG1] CameraAlignment begin");
+            Log("[MG1] CameraAlignment begin");
             SetPhase(MiniGame1Phase.CameraAlignment);
             cameraAlignment.BeginChallenge();
             yield return WaitUntilComplete(cameraAlignment);
             cameraAlignment.ContributeToMetrics(ref raw);
             challengeScores.cameraScore = cameraAlignment.GetScore0To100(learningProfile);
-            if (enableLogging) Debug.Log($"[MG1] CameraAlignment end score={challengeScores.cameraScore:F1}");
+            Log($"[MG1] CameraAlignment end score={challengeScores.cameraScore:F1}");
         }
 
         if (freeMoveBetweenChallengesSeconds > 0f)
         {
-            if (enableLogging) Debug.Log($"[MG1] FreeMove (between) {freeMoveBetweenChallengesSeconds:F1}s");
+            Log($"[MG1] FreeMove (between) {freeMoveBetweenChallengesSeconds:F1}s");
             SetPhase(MiniGame1Phase.FreeMoveBetween_Camera_Speed);
             yield return new WaitForSeconds(freeMoveBetweenChallengesSeconds);
         }
 
         if (speedConsistency != null)
         {
-            if (enableLogging) Debug.Log("[MG1] SpeedConsistency begin");
+            Log("[MG1] SpeedConsistency begin");
             SetPhase(MiniGame1Phase.SpeedConsistency);
             speedConsistency.BeginChallenge();
             yield return WaitUntilComplete(speedConsistency);
             speedConsistency.ContributeToMetrics(ref raw);
             challengeScores.speedScore = speedConsistency.GetScore0To100(learningProfile);
-            if (enableLogging) Debug.Log($"[MG1] SpeedConsistency end score={challengeScores.speedScore:F1}");
+            Log($"[MG1] SpeedConsistency end score={challengeScores.speedScore:F1}");
         }
 
         if (trackAccuracyTracker != null)
@@ -189,32 +195,24 @@ public class MiniGame1Manager : MonoBehaviour
             raw.averageLateralDistanceMeters = trackAccuracyTracker.GetAverageLateralDistance();
         }
 
-        if (enableLogging)
-        {
-            Debug.Log($"[MG1] Raw avgLateral={raw.averageLateralDistanceMeters:F2}m avgRT={raw.GetAverageResponseTime():F2}s avgCorrErr={raw.GetAverageCorrectionErrorDeg():F1}deg camErr={raw.GetAverageCameraErrorDeg():F1}deg speedStd={raw.speedStdDev:F2} targetSpeed={raw.speedTarget:F2}");
-        }
+        Log($"[MG1] Raw avgLateral={raw.averageLateralDistanceMeters:F2}m avgRT={raw.GetAverageResponseTime():F2}s avgCorrErr={raw.GetAverageCorrectionErrorDeg():F1}deg camErr={raw.GetAverageCameraErrorDeg():F1}deg speedStd={raw.speedStdDev:F2} targetSpeed={raw.speedTarget:F2}");
 
         LastResult = MiniGame1Evaluator.Evaluate(learningProfile, raw, challengeScores);
 
-        if (enableLogging)
-        {
-            Debug.Log($"[MG1] Result final={LastResult.finalScore:F1} tier={LastResult.tier} drift={LastResult.challengeScores.driftScore:F1} cam={LastResult.challengeScores.cameraScore:F1} speed={LastResult.challengeScores.speedScore:F1}");
-        }
+        Log($"[MG1] Result final={LastResult.finalScore:F1} tier={LastResult.tier} drift={LastResult.challengeScores.driftScore:F1} cam={LastResult.challengeScores.cameraScore:F1} speed={LastResult.challengeScores.speedScore:F1}");
 
         // Update robot stats once at end, only if passed.
         MiniGame1RobotStatUpdater.ApplyUpdateOnce(learningProfile, robotStats, LastResult);
 
-        if (enableLogging && robotStats != null)
-        {
-            Debug.Log($"[MG1] RobotStats now stability={robotStats.stability:F2} pathAcc={robotStats.pathAccuracy:F2} resp={robotStats.inputResponsiveness:F2} driftRate={robotStats.driftErrorRate:F2} camRate={robotStats.cameraErrorRate:F2} speedRate={robotStats.speedErrorRate:F2}");
-        }
+        if (robotStats != null)
+            Log($"[MG1] RobotStats now stability={robotStats.stability:F2} pathAcc={robotStats.pathAccuracy:F2} resp={robotStats.inputResponsiveness:F2} driftRate={robotStats.driftErrorRate:F2} camRate={robotStats.cameraErrorRate:F2} speedRate={robotStats.speedErrorRate:F2}");
 
         isRunning = false;
-        if (enableLogging) Debug.Log("[MG1] RunSequence end");
+        Log("[MG1] RunSequence end");
 
         SetPhase(MiniGame1Phase.Completed);
 
-        if (enableLogging) Debug.Log("[MG1] Invoking MiniGameCompleted event");
+        Log("[MG1] Invoking MiniGameCompleted event");
         MiniGameCompleted?.Invoke(LastResult);
     }
 

@@ -167,9 +167,35 @@ public class IntroRobotController : MonoBehaviour
 
         if (closeButton == null)
         {
+            // Try the expected path first.
             Transform t = robotMessagesCanvas.transform.Find("Buttons/Button (1)");
             if (t != null) closeButton = t.GetComponent<Button>();
         }
+
+        // Fallback: scan all buttons and find by label text containing "close".
+        if (closeButton == null)
+        {
+            foreach (Button b in robotMessagesCanvas.GetComponentsInChildren<Button>(true))
+            {
+                TMP_Text lbl = b.GetComponentInChildren<TMP_Text>(true);
+                if (lbl != null && lbl.text.IndexOf("close", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    closeButton = b;
+                    break;
+                }
+            }
+        }
+
+        // Final fallback: use the last button (Configure is first, Close is last).
+        if (closeButton == null)
+        {
+            Button[] btns = robotMessagesCanvas.GetComponentsInChildren<Button>(true);
+            if (btns.Length >= 2)
+                closeButton = btns[btns.Length - 1];
+        }
+
+        if (closeButton == null)
+            Debug.LogWarning("[IntroRobotController] Could not find Close button in Robot Messages Canvas.", this);
     }
 
     private void OnEnable()

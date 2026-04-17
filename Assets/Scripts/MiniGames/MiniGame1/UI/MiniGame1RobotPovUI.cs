@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -19,8 +20,13 @@ public class MiniGame1RobotPovUI : MonoBehaviour
 
     [Header("Behavior")]
     [SerializeField] private bool autoFind = true;
+    [Tooltip("Max number of log lines visible at once (oldest scroll off the top).")]
+    [SerializeField, Min(1)] private int maxLogLines = 6;
+    [Tooltip("Characters per line before the line is truncated with '…'. Tune to match UI width.")]
+    [SerializeField, Min(5)] private int maxCharsPerLine = 28;
 
     private MiniGame1Manager.MiniGame1Phase lastPhase = MiniGame1Manager.MiniGame1Phase.None;
+    private readonly List<string> logLines = new List<string>();
 
     private void OnEnable()
     {
@@ -39,6 +45,7 @@ public class MiniGame1RobotPovUI : MonoBehaviour
         if (miniGame1Manager != null)
         {
             miniGame1Manager.PhaseChanged += OnPhaseChanged;
+            miniGame1Manager.LogMessage   += AppendLog;
             OnPhaseChanged(miniGame1Manager.CurrentPhase);
         }
     }
@@ -48,6 +55,7 @@ public class MiniGame1RobotPovUI : MonoBehaviour
         if (miniGame1Manager != null)
         {
             miniGame1Manager.PhaseChanged -= OnPhaseChanged;
+            miniGame1Manager.LogMessage   -= AppendLog;
         }
     }
 
@@ -69,55 +77,47 @@ public class MiniGame1RobotPovUI : MonoBehaviour
             case MiniGame1Manager.MiniGame1Phase.FreeMoveInitial:
                 SetChallengeName("Free Move");
                 SetPrompt("");
-                SetLog(" ");
+                SetLog("");  // Clear log at mini-game start
                 break;
 
             case MiniGame1Manager.MiniGame1Phase.DriftLeft:
                 SetChallengeName("Drift (1)");
                 SetPrompt("Go Right / Go Left");
-                SetLog(" ");
                 break;
 
             case MiniGame1Manager.MiniGame1Phase.FreeMoveBetween_DriftLeft_DriftRight:
                 SetChallengeName("Free Move");
                 SetPrompt("");
-                SetLog(" ");
                 break;
 
             case MiniGame1Manager.MiniGame1Phase.DriftRight:
                 SetChallengeName("Drift (2)");
                 SetPrompt("Go Right / Go Left");
-                SetLog(" ");
                 break;
 
             case MiniGame1Manager.MiniGame1Phase.FreeMoveBetween_DriftRight_Camera:
                 SetChallengeName("Free Move");
                 SetPrompt("");
-                SetLog(" ");
                 break;
 
             case MiniGame1Manager.MiniGame1Phase.CameraAlignment:
                 SetChallengeName("Camera");
                 SetPrompt("Fix camera");
-                SetLog(" ");
                 break;
 
             case MiniGame1Manager.MiniGame1Phase.FreeMoveBetween_Camera_Speed:
                 SetChallengeName("Free Move");
                 SetPrompt("");
-                SetLog(" ");
                 break;
 
             case MiniGame1Manager.MiniGame1Phase.SpeedConsistency:
                 SetChallengeName("Speed");
                 SetPrompt("Hold speed");
-                SetLog(" ");
                 break;
 
             case MiniGame1Manager.MiniGame1Phase.Completed:
                 SetChallengeName("Done");
                 SetPrompt("");
-                SetLog(" ");
                 break;
 
             default:
@@ -137,7 +137,33 @@ public class MiniGame1RobotPovUI : MonoBehaviour
 
     private void SetLog(string msg)
     {
-        if (logText != null) logText.text = msg;
+        logLines.Clear();
+        if (!string.IsNullOrEmpty(msg))
+            logLines.Add(msg);
+        FlushLog();
+    }
+
+    private void AppendLog(string msg)
+    {
+        if (logText == null) return;
+
+        // Truncate lines that are too wide for the text box (long identifiers with no spaces).
+        if (msg.Length > maxCharsPerLine)
+            msg = msg.Substring(0, maxCharsPerLine - 1) + "\u2026"; // ellipsis
+
+        logLines.Add(msg);
+
+        // Drop oldest lines so we never exceed the visible cap.
+        while (logLines.Count > maxLogLines)
+            logLines.RemoveAt(0);
+
+        FlushLog();
+    }
+
+    private void FlushLog()
+    {
+        if (logText == null) return;
+        logText.text = string.Join("\n", logLines);
     }
 
     private void AutoFindUI()

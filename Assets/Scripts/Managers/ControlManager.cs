@@ -204,6 +204,8 @@ public class ControlManager : MonoBehaviour
 
     public bool IsPlayerControlActive => isPlayerControlActive;
     public bool IsInputLocked => isInputLocked;
+    /// <summary>True when player camera look should be blocked (full input lock OR message open while player is active).</summary>
+    public bool IsPlayerLookSuppressed => isInputLocked || (messageBlocksPlayerControls && isPlayerControlActive);
 
     public void SetInputLocked(bool locked)
     {
