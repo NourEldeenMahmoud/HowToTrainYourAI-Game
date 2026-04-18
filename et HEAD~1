@@ -1,0 +1,25 @@
+[33m8f71127[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mAya-UI[m[33m)[m Add home environment prefabs
+[33m572eb16[m[33m ([m[1;31mupstream/Aya-UI[m[33m)[m Enable Git LFS
+[33m9bf41b4[m Add Dialogue UI
+[33mf68a0ec[m Merge branch 'MiniGame1/Nour' into Aya-UI
+[33m8ddb100[m[33m ([m[1;31mupstream/MiniGame1/Nour[m[33m, [m[1;32mMiniGame1/Nour[m[33m)[m fix(MiniGame1): correct result performance bars + remove duplicate interactable
+[33mc0fc882[m feat(MiniGame1): fix cameras, robot POV log, git merge setup
+[33me5d2907[m feat(intro): add intro robot flow before MiniGame1
+[33m5ece117[m Edit Result Screen
+[33m70b75ec[m Merge remote-tracking branch 'origin/Aya-UI' into MiniGame1/Nour
+[33me518e6e[m Merge origin/MiniGame1/Omar into MiniGame1/Nour
+[33m6f564ec[m[33m ([m[1;31mupstream/MiniGame1/Omar[m[33m, [m[1;32mMiniGame1/Omar[m[33m)[m fix(MiniGame1): persist post-calibration faults; tune robot camera; fix result bars
+[33m534cc02[m Edit UI
+[33m07f8a39[m feat(MiniGame1): Control Calibration — gameplay, UI, scoring (branch MiniGame1/Omar)
+[33m30a7dd2[m Merge remote-tracking branch 'origin/Aya-UI' into MiniGame1/Nour
+[33mf888f91[m Add Menus & Message & Robot Message UI
+[33m340a245[m Add Result Screen UI & Player HUD UI
+[33m3cbb989[m Merge branch 'Aya-UI' into MiniGame1/Nour
+[33m11bef84[m Add Robot pov UI
+[33m1c96c23[m Merge branch 'MiniGame1/Omar' into MiniGame1/Nour
+[33m1f49da0[m feat(minigame1): implement control calibration flow
+[33m6af6d9e[m[33m ([m[1;31mupstream/main[m[33m, [m[1;31mupstream/HEAD[m[33m)[m Merge pull request #1 from AyaSheta13/UI
+[33m9feac70[m add ui scenes
+[33mf5261cc[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Unity: main scene, asset reorg, prefab updates; fix build settings scene path
+[33md311f82[m Docs: team collaboration guide, README, update project reference
+[33mf6bbfc8[m Initial commit: Unity 6 project, Git LFS for meshes and media
