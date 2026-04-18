@@ -12,13 +12,11 @@
 *.physicsMaterial2D  merge=unityyamlmerge eol=lf text
 *.spriteatlas        merge=unityyamlmerge eol=lf text
 *.meta      merge=unityyamlmerge eol=lf text
-
 # C# / text sources — normalise line endings
 *.cs    eol=lf text
 *.json  eol=lf text
 *.xml   eol=lf text
 *.txt   eol=lf text
-
 # ---------------------------------------------------------------
 # Binary assets — store in Git LFS, never text-merge
 # ---------------------------------------------------------------
