@@ -12,6 +12,10 @@ public class RobotStatsSO : ScriptableObject
     [Range(0f, 1f)] public float pathAccuracy = 0.40f;
     [Range(0f, 1f)] public float inputResponsiveness = 0.40f;
 
+    [Header("Post-MiniGame2 Stats (0..1)")]
+    [Range(0f, 1f)] public float energyEfficiency = 0.40f;
+    [Range(0f, 1f)] public float decisionConfidence = 0.40f;
+
     [Header("Post-MiniGame Error Rates (0..1)")]
     [Tooltip("Probability/intensity driver for yaw drift issues after calibration.")]
     [Range(0f, 1f)] public float driftErrorRate = 0.50f;
@@ -33,6 +37,13 @@ public class RobotStatsSO : ScriptableObject
         stability = Mathf.Clamp01(stability + stabilityDelta);
         pathAccuracy = Mathf.Clamp01(pathAccuracy + pathAccuracyDelta);
         inputResponsiveness = Mathf.Clamp01(inputResponsiveness + responsivenessDelta);
+    }
+
+    public void ApplyMiniGame2Delta(float energyEfficiencyDelta, float pathAccuracyDelta, float decisionConfidenceDelta)
+    {
+        energyEfficiency = Mathf.Clamp01(energyEfficiency + energyEfficiencyDelta);
+        pathAccuracy = Mathf.Clamp01(pathAccuracy + pathAccuracyDelta);
+        decisionConfidence = Mathf.Clamp01(decisionConfidence + decisionConfidenceDelta);
     }
 
     public void SetErrorRates(float drift, float camera, float speed)
