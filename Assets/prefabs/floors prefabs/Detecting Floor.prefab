@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4451574781251647165}
   - component: {fileID: 9153437491590875412}
   - component: {fileID: 6096337856116304970}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: line (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -101,7 +101,7 @@ GameObject:
   - component: {fileID: 5866136294746682734}
   - component: {fileID: 2600698067328401899}
   - component: {fileID: 7189103269639784390}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: line (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -191,7 +191,7 @@ GameObject:
   - component: {fileID: 5329153699838916102}
   - component: {fileID: 1554237682861119208}
   - component: {fileID: 8774223242864164853}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: line (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -282,7 +282,7 @@ GameObject:
   - component: {fileID: 453302610228245855}
   - component: {fileID: 4044686123388290431}
   - component: {fileID: 2972312368403811756}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Detecting Floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -394,8 +394,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6036545547765906434}
   - component: {fileID: 2686848486391332511}
-  - component: {fileID: 2265891896152916524}
-  m_Layer: 0
+  - component: {fileID: 3907306802179815876}
+  m_Layer: 6
   m_Name: Trigger Volumn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -438,7 +438,7 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 4, z: 1}
   m_Center: {x: 0, y: 1.5, z: 0}
---- !u!114 &2265891896152916524
+--- !u!114 &3907306802179815876
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -447,11 +447,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 8156072311485904454}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1bf9aba8f5e3c894e9c64c2c5b0992c9, type: 3}
+  m_Script: {fileID: 11500000, guid: 60ff35ae6c3f30c44adaa0660f5f4cd5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DetectMovement
-  colorMaterial: {fileID: 2100000, guid: 6a5b61e1013df4547979807f1052c335, type: 2}
-  targetedObject: {fileID: 5645524203778389602}
+  m_EditorClassIdentifier: Assembly-CSharp::FloorTile
+  energyCost: 1
+  isEnergySaving: 0
+  autoGridFromWorld: 1
+  gridCoord: {x: 0, y: 0}
 --- !u!1 &8326449133312449023
 GameObject:
   m_ObjectHideFlags: 0
@@ -463,7 +465,7 @@ GameObject:
   - component: {fileID: 5802524856410139304}
   - component: {fileID: 4200886639237154803}
   - component: {fileID: 4946417071303614472}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: line
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -551,7 +553,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2710980652531333671}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Limit of the cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
