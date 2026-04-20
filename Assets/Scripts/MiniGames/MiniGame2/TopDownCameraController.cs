@@ -16,7 +16,7 @@ public class TopDownCameraController : MonoBehaviour
     [SerializeField] private Transform cameraTransform;
 
     [Header("Rotation (Fixed)")]
-    [SerializeField, Range(5f, 85f)] private float defaultPitch = 55f;
+    [SerializeField, Range(5f, 85f)] private float defaultPitch = 70f;
     [SerializeField] private float defaultYaw = 0f;
 
     [Header("Pan")]
@@ -24,10 +24,10 @@ public class TopDownCameraController : MonoBehaviour
 
     [Header("Zoom")]
     [SerializeField, Min(0.01f)] private float zoomSpeed = 2.0f;
-    [SerializeField, Min(0.01f)] private float minZoomHeight = 4.0f;
-    [SerializeField, Min(0.01f)] private float maxZoomHeight = 18.0f;
+    [SerializeField, Min(0.01f)] private float minZoomHeight = 5.0f;
+    [SerializeField, Min(0.01f)] private float maxZoomHeight = 22.0f;
     [Tooltip("Camera local offset at max zoom height. Zoom scales Y and Z together to preserve angle.")]
-    [SerializeField] private Vector3 cameraLocalOffsetAtMaxZoom = new Vector3(0f, 18f, -18f);
+    [SerializeField] private Vector3 cameraLocalOffsetAtMaxZoom = new Vector3(0f, 22f, -8f);
 
     [Header("Constraints")]
     [SerializeField] private Bounds roomBounds = new Bounds(Vector3.zero, new Vector3(10f, 0f, 10f));
@@ -38,6 +38,10 @@ public class TopDownCameraController : MonoBehaviour
 
     private void Awake()
     {
+        // Force-disable CinemachineBrain so it cannot override our camera transform every LateUpdate.
+        var brain = GetComponent<CinemachineBrain>();
+        if (brain != null) brain.enabled = false;
+
         if (pivot == null) pivot = transform;
         if (cameraTransform == null) cameraTransform = transform;
 
@@ -79,9 +83,8 @@ public class TopDownCameraController : MonoBehaviour
 
         if (isPanning)
         {
-            Vector2 now = Mouse.current.position.ReadValue();
-            Vector2 delta = now - lastMousePos;
-            lastMousePos = now;
+            // Use Mouse.current.delta instead of position diff — works even when cursor is locked.
+            Vector2 delta = Mouse.current.delta.ReadValue();
 
             // Screen delta -> world delta on XZ.
             Vector3 right = cameraTransform.right;
