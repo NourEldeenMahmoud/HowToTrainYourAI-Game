@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------
+# Unity YAML files — use UnityYAMLMerge (smart merge for scenes,
+# prefabs, assets). Run setup-git.ps1 once to register the driver.
+# ---------------------------------------------------------------
+*.unity     merge=unityyamlmerge eol=lf text
+*.prefab    merge=unityyamlmerge eol=lf text
+*.asset     merge=unityyamlmerge eol=lf text
+*.mat       merge=unityyamlmerge eol=lf text
+*.anim      merge=unityyamlmerge eol=lf text
+*.controller merge=unityyamlmerge eol=lf text
+*.overrideController merge=unityyamlmerge eol=lf text
+*.physicsMaterial2D  merge=unityyamlmerge eol=lf text
+*.spriteatlas        merge=unityyamlmerge eol=lf text
+*.meta      merge=unityyamlmerge eol=lf text
+# C# / text sources — normalise line endings
+*.cs    eol=lf text
+*.json  eol=lf text
+*.xml   eol=lf text
+*.txt   eol=lf text
+# ---------------------------------------------------------------
+# Binary assets — store in Git LFS, never text-merge
+# ---------------------------------------------------------------
+*.fbx  filter=lfs diff=lfs merge=lfs -text
+*.FBX  filter=lfs diff=lfs merge=lfs -text
+*.blend filter=lfs diff=lfs merge=lfs -text
+*.psd  filter=lfs diff=lfs merge=lfs -text
+*.exr  filter=lfs diff=lfs merge=lfs -text
+*.tif  filter=lfs diff=lfs merge=lfs -text
+*.tiff filter=lfs diff=lfs merge=lfs -text
+*.wav  filter=lfs diff=lfs merge=lfs -text
+*.mp4  filter=lfs diff=lfs merge=lfs -text
+*.aiff filter=lfs diff=lfs merge=lfs -text
+*.tga  filter=lfs diff=lfs merge=lfs -text
+*.png  filter=lfs diff=lfs merge=lfs -text
+*.jpg  filter=lfs diff=lfs merge=lfs -text
+*.jpeg filter=lfs diff=lfs merge=lfs -text
