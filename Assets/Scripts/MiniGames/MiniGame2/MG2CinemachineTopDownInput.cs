@@ -27,6 +27,10 @@ public class MG2CinemachineTopDownInput : MonoBehaviour
     [SerializeField, Min(0.0001f)] private float panSpeed = 0.02f;
     [Tooltip("Max distance the pan offset can drift from the robot on XZ (0 = unlimited).")]
     [SerializeField, Min(0f)] private float maxPanOffset = 12f;
+    [Tooltip("Optional: clamp camera target XZ inside warehouse bounds.")]
+    [SerializeField] private bool clampPanToBounds = true;
+    [SerializeField] private Transform panBoundsMin;
+    [SerializeField] private Transform panBoundsMax;
     [Tooltip("Default pan offset applied when the scene starts (X = world X, Y = world Z).")]
     [SerializeField] private Vector2 defaultPanOffsetXZ = Vector2.zero;
     [Tooltip("If true, the default pan offset is applied on Start().")]
@@ -115,7 +119,31 @@ public class MG2CinemachineTopDownInput : MonoBehaviour
 
         Vector3 basePos = robotTransform.position;
         basePos.y += followYOffset;
-        cameraTarget.position = basePos + panOffsetXZ;
+
+        Vector3 targetPos = basePos + panOffsetXZ;
+        if (clampPanToBounds)
+        {
+            targetPos = ClampTargetToWorldBounds(targetPos);
+            panOffsetXZ = targetPos - basePos;
+            panOffsetXZ.y = 0f;
+        }
+
+        cameraTarget.position = targetPos;
+    }
+
+    private Vector3 ClampTargetToWorldBounds(Vector3 targetPos)
+    {
+        if (panBoundsMin == null || panBoundsMax == null)
+            return targetPos;
+
+        float minX = Mathf.Min(panBoundsMin.position.x, panBoundsMax.position.x);
+        float maxX = Mathf.Max(panBoundsMin.position.x, panBoundsMax.position.x);
+        float minZ = Mathf.Min(panBoundsMin.position.z, panBoundsMax.position.z);
+        float maxZ = Mathf.Max(panBoundsMin.position.z, panBoundsMax.position.z);
+
+        targetPos.x = Mathf.Clamp(targetPos.x, minX, maxX);
+        targetPos.z = Mathf.Clamp(targetPos.z, minZ, maxZ);
+        return targetPos;
     }
 
     /// <summary>Recenter pan so target sits on the robot (optional: bind to a UI button).</summary>

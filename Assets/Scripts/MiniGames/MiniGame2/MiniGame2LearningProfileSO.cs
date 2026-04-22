@@ -12,12 +12,7 @@ public class MiniGame2LearningProfileSO : ScriptableObject
 
     [Header("Final Score Weights (sum should be 1.0)")]
     [Range(0f, 1f)] public float energyEfficiencyWeight = 0.40f;
-    [Range(0f, 1f)] public float pathEfficiencyWeight = 0.35f;
-    [Range(0f, 1f)] public float collisionSafetyWeight = 0.25f;
-
-    [Header("Collision Safety")]
-    [Tooltip("How many points are subtracted per collision from the collision safety score (starting from 100).")]
-    [Range(0f, 100f)] public float collisionPenaltyPerHit = 10f;
+    [Range(0f, 1f)] public float pathEfficiencyWeight = 0.60f;
 
     [Header("Tier Deltas")]
     public MiniGame2TierDeltas excellentDeltas = new MiniGame2TierDeltas
@@ -71,24 +66,7 @@ public class MiniGame2LearningProfileSO : ScriptableObject
         return Mathf.Clamp(((float)idealSteps / actualSteps) * 100f, 0f, 100f);
     }
 
-    public float ComputeCollisionSafetyScore(int collisionCount)
-    {
-        float score = 100f - Mathf.Max(0, collisionCount) * collisionPenaltyPerHit;
-        return Mathf.Clamp(score, 0f, 100f);
-    }
-
-    public float ComputeFinalScore(float energyScore0To100, float pathScore0To100, float collisionScore0To100)
-    {
-        return Mathf.Clamp(
-            energyScore0To100 * energyEfficiencyWeight +
-            pathScore0To100 * pathEfficiencyWeight +
-            collisionScore0To100 * collisionSafetyWeight,
-            0f,
-            100f
-        );
-    }
-
-    public float ComputeFinalScoreWithoutCollision(float energyScore0To100, float pathScore0To100)
+    public float ComputeFinalScore(float energyScore0To100, float pathScore0To100)
     {
         float energyWeight = Mathf.Max(0f, energyEfficiencyWeight);
         float pathWeight = Mathf.Max(0f, pathEfficiencyWeight);

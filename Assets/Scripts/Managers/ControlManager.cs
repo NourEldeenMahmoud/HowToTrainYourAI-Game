@@ -37,6 +37,7 @@ public class ControlManager : MonoBehaviour
 
     private bool isPlayerControlActive = true;
     private bool isInputLocked;
+    private bool isSwitchEnabled = true;
     /// <summary>When true (and controlling player), movement/look are blocked; Tab invokes <see cref="messageBlockingTabPressed"/> (e.g. close message).</summary>
     private bool messageBlocksPlayerControls;
     private event Action messageBlockingTabPressed;
@@ -46,6 +47,7 @@ public class ControlManager : MonoBehaviour
     private float targetFxWeight;
     private Coroutine fxDelayRoutine;
     private MiniGame1Manager miniGame1Manager;
+    private MiniGame2Manager miniGame2Manager;
     private CinemachineOrbitalFollow robotCameraOrbitalFollow;
     private float lastRobotCameraOffset;
 
@@ -86,6 +88,16 @@ public class ControlManager : MonoBehaviour
 
     private void OnSwitchPerformed(InputAction.CallbackContext context)
     {
+        if (!isSwitchEnabled)
+        {
+            return;
+        }
+
+        if (IsSwitchBlockedByMiniGame())
+        {
+            return;
+        }
+
         if (isInputLocked)
         {
             return;
@@ -100,6 +112,23 @@ public class ControlManager : MonoBehaviour
         }
 
         ToggleControl();
+    }
+
+    private bool IsSwitchBlockedByMiniGame()
+    {
+        if (miniGame1Manager == null)
+        {
+            miniGame1Manager = FindFirstObjectByType<MiniGame1Manager>();
+        }
+
+        if (miniGame2Manager == null)
+        {
+            miniGame2Manager = FindFirstObjectByType<MiniGame2Manager>();
+        }
+
+        bool miniGame1Running = miniGame1Manager != null && miniGame1Manager.IsMiniGameRunning;
+        bool miniGame2Running = miniGame2Manager != null && miniGame2Manager.IsMiniGameRunning;
+        return miniGame1Running || miniGame2Running;
     }
 
     public void AddMessageBlockingTabListener(Action listener)
@@ -204,6 +233,7 @@ public class ControlManager : MonoBehaviour
 
     public bool IsPlayerControlActive => isPlayerControlActive;
     public bool IsInputLocked => isInputLocked;
+    public bool IsSwitchEnabled => isSwitchEnabled;
     /// <summary>True when player camera look should be blocked (full input lock OR message open while player is active).</summary>
     public bool IsPlayerLookSuppressed => isInputLocked || (messageBlocksPlayerControls && isPlayerControlActive);
 
@@ -238,6 +268,11 @@ public class ControlManager : MonoBehaviour
         SyncGameplayInputLookAndCursor();
 
         InputLockChanged?.Invoke(isInputLocked);
+    }
+
+    public void SetSwitchEnabled(bool enabled)
+    {
+        isSwitchEnabled = enabled;
     }
 
     private void SyncGameplayInputLookAndCursor()
@@ -359,7 +394,7 @@ public class ControlManager : MonoBehaviour
         }
 
         // Include inactive objects. Re-query if the first pass ran before cameras existed (empty array was cached as non-null).
-        cachedCinemachineInputControllers = UnityEngine.Object.FindObjectsOfType<CinemachineInputAxisController>(true);
+        cachedCinemachineInputControllers = UnityEngine.Object.FindObjectsByType<CinemachineInputAxisController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         cachedCinemachineInputControllersEnabled = new bool[cachedCinemachineInputControllers.Length];
     }
 

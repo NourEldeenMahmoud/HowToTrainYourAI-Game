@@ -84,7 +84,7 @@ public class GridManager : MonoBehaviour
         ResolveOrigin();
 
         if (obstacleLayer.value == 0)
-            Debug.LogWarning("[GridManager] obstacleLayer is not set (value = 0). Obstacles will NOT block pathfinding or collision scoring. Assign a Layer in the Inspector.", this);
+            Debug.LogWarning("[GridManager] obstacleLayer is not set (value = 0). Obstacles will NOT block pathfinding. Assign a Layer in the Inspector.", this);
 
         grid = new Node[gridWidth, gridHeight];
 

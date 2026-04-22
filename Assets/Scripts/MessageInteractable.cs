@@ -62,6 +62,7 @@ public class MessageInteractable : SimpleInteractable
 
         messageIsOpen = true;
         messageUiRoot.SetActive(true);
+        controlManager.SetSwitchEnabled(true);
         controlManager.AddMessageBlockingTabListener(OnTabCloseMessage);
         controlManager.SetMessageBlocksPlayerControls(true);
     }

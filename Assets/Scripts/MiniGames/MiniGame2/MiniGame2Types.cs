@@ -25,15 +25,12 @@ public struct MiniGame2EvaluationResult
     public MiniGameTier tier; // reuse enum from MiniGame1Types.cs
 
     [Header("Component scores (0..100)")]
-    [Range(0f, 100f)] public float energyEfficiencyScore;   // 40%
-    [Range(0f, 100f)] public float pathEfficiencyScore;     // 35%
-    [Range(0f, 100f)] public float collisionSafetyScore;    // 25%
+    [Range(0f, 100f)] public float energyEfficiencyScore;
+    [Range(0f, 100f)] public float pathEfficiencyScore;
 
     [Header("Raw totals")]
     public float actualEnergy;
     public float idealEnergy;
-    public int collisionCount;
     public int actualStepCount;
     public int idealStepCount;
 }
-

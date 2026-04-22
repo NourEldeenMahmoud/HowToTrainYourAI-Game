@@ -19,6 +19,7 @@ public class TileClickMover : MonoBehaviour
 
     [Header("Input")]
     [SerializeField] private InputActionReference clickMoveAction;
+    [SerializeField] private InputActionReference interactAction;
     [SerializeField] private InputActionReference pointerPositionAction;
     [SerializeField] private LayerMask floorLayer;
     [SerializeField, Min(0f)] private float clickMaxDistance = 200f;
@@ -36,9 +37,6 @@ public class TileClickMover : MonoBehaviour
     [Tooltip("If true, diagonal adjacent moves are allowed.")]
     [SerializeField] private bool allowDiagonalAdjacent = true;
 
-    [Header("Collision")]
-    [SerializeField] private LayerMask obstacleLayer;
-
     [Header("Step Recording (No Rigidbody needed)")]
     [Tooltip("If enabled, each reached step is recorded directly on MiniGame2Manager (energy/path/win) without requiring floor trigger colliders.")]
     [SerializeField] private bool recordStepsDirectly = true;
@@ -50,7 +48,6 @@ public class TileClickMover : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool verboseMovementLogs = false;
-    [SerializeField, Min(0.01f)] private float collisionDedupWindowSeconds = 0.2f;
 
     private enum MovementState
     {
@@ -71,7 +68,6 @@ public class TileClickMover : MonoBehaviour
     private float totalAppliedEnergy;
     private float totalExpectedEnergyFromGrid;
     private readonly List<Vector2Int> visitedStepCoords = new List<Vector2Int>(256);
-    private readonly Dictionary<int, float> lastCollisionTimesByCollider = new Dictionary<int, float>(16);
     private int lastProcessedClickFrame = -1;
     private int walkingBoolHash;
     private int sprintingBoolHash;
@@ -121,7 +117,6 @@ public class TileClickMover : MonoBehaviour
         stepQueue.Clear();
         movementState = MovementState.Idle;
         SetMovementAnimation(false);
-        lastCollisionTimesByCollider.Clear();
     }
 
     private void Start()
@@ -190,18 +185,28 @@ public class TileClickMover : MonoBehaviour
 
     private void BindInputActions()
     {
-        if (clickMoveAction == null || clickMoveAction.action == null)
-            return;
+        if (clickMoveAction != null && clickMoveAction.action != null)
+            clickMoveAction.action.performed += OnClickMovePerformed;
 
-        clickMoveAction.action.performed += OnClickMovePerformed;
+        if (interactAction != null && interactAction.action != null)
+            interactAction.action.performed += OnInteractPerformed;
     }
 
     private void UnbindInputActions()
     {
-        if (clickMoveAction == null || clickMoveAction.action == null)
+        if (clickMoveAction != null && clickMoveAction.action != null)
+            clickMoveAction.action.performed -= OnClickMovePerformed;
+
+        if (interactAction != null && interactAction.action != null)
+            interactAction.action.performed -= OnInteractPerformed;
+    }
+
+    private void OnInteractPerformed(InputAction.CallbackContext context)
+    {
+        if (miniGame2Manager == null)
             return;
 
-        clickMoveAction.action.performed -= OnClickMovePerformed;
+        miniGame2Manager.TryInteractWithAudioCard(currentGridPos);
     }
 
     private void OnClickMovePerformed(InputAction.CallbackContext context)
@@ -330,6 +335,15 @@ public class TileClickMover : MonoBehaviour
         destination = default;
         if (raycastCamera == null) return false;
 
+        if (hasCurrentGridPos && restrictToAdjacentTileOnly)
+        {
+            if (TryProjectClickToMovementPlane(screenPos, out Vector3 projectedPoint))
+            {
+                destination = InferAdjacentFromClick(projectedPoint, currentGridPos);
+                return true;
+            }
+        }
+
         Ray ray = raycastCamera.ScreenPointToRay(screenPos);
         if (!TryGetFloorHit(ray, out RaycastHit hit))
             return false;
@@ -352,6 +366,22 @@ public class TileClickMover : MonoBehaviour
         return true;
     }
 
+    private bool TryProjectClickToMovementPlane(Vector2 screenPos, out Vector3 worldPoint)
+    {
+        worldPoint = default;
+        if (raycastCamera == null)
+            return false;
+
+        float planeY = moveRoot != null ? moveRoot.position.y : 0f;
+        Plane movementPlane = new Plane(Vector3.up, new Vector3(0f, planeY, 0f));
+        Ray ray = raycastCamera.ScreenPointToRay(screenPos);
+        if (!movementPlane.Raycast(ray, out float distance))
+            return false;
+
+        worldPoint = ray.GetPoint(distance);
+        return true;
+    }
+
     private Vector2Int InferAdjacentFromClick(Vector3 worldHit, Vector2Int from)
     {
         if (gridManager == null)
@@ -364,6 +394,14 @@ public class TileClickMover : MonoBehaviour
         float deadZone = Mathf.Max(0.05f, gridManager == null ? 0.1f : 0.15f * Mathf.Max(0.01f, GetCellSizeGuess()));
         int stepX = Mathf.Abs(delta.x) > deadZone ? (delta.x > 0f ? 1 : -1) : 0;
         int stepY = Mathf.Abs(delta.z) > deadZone ? (delta.z > 0f ? 1 : -1) : 0;
+
+        if (allowDiagonalAdjacent && stepX != 0 && stepY != 0)
+        {
+            float absX = Mathf.Abs(delta.x);
+            float absZ = Mathf.Abs(delta.z);
+            if (absX > absZ * 1.35f) stepY = 0;
+            else if (absZ > absX * 1.35f) stepX = 0;
+        }
 
         if (!allowDiagonalAdjacent)
         {
@@ -464,8 +502,7 @@ public class TileClickMover : MonoBehaviour
     }
 
     /// <summary>
-    /// FloorLayer = 0 means "nothing" in Unity; use RaycastAll and pick closest FloorTile.
-    /// Also handles ceiling/furniture blocking a single raycast by scanning all hits.
+    /// FloorLayer = 0 means "nothing" in Unity; use RaycastAll fallback.
     /// </summary>
     private bool TryGetFloorHit(Ray ray, out RaycastHit hit)
     {
@@ -473,10 +510,7 @@ public class TileClickMover : MonoBehaviour
         int mask = floorLayer.value == 0 ? ~0 : floorLayer.value;
 
         if (Physics.Raycast(ray, out hit, clickMaxDistance, mask, QueryTriggerInteraction.Collide))
-        {
-            if (hit.collider.GetComponentInParent<FloorTile>() != null)
-                return true;
-        }
+            return true;
 
         RaycastHit[] hits = Physics.RaycastAll(ray, clickMaxDistance, ~0, QueryTriggerInteraction.Collide);
         if (hits == null || hits.Length == 0) return false;
@@ -484,7 +518,12 @@ public class TileClickMover : MonoBehaviour
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
         foreach (RaycastHit h in hits)
         {
-            if (h.collider != null && h.collider.GetComponentInParent<FloorTile>() != null)
+            if (h.collider == null)
+                continue;
+
+            bool isFloorLayer = floorLayer.value != 0 && ((floorLayer.value & (1 << h.collider.gameObject.layer)) != 0);
+            bool hasFloorTile = h.collider.GetComponentInParent<FloorTile>() != null;
+            if (isFloorLayer || hasFloorTile)
             {
                 hit = h;
                 return true;
@@ -666,68 +705,6 @@ public class TileClickMover : MonoBehaviour
             return (0f, false);
 
         return (node.movementCost, node.isEnergySaving);
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (moverCharacterController != null)
-            return;
-
-        if (collision == null)
-            return;
-
-        bool isObstacle;
-        if (obstacleLayer.value != 0)
-        {
-            // Use the configured layer mask when it's set.
-            isObstacle = (obstacleLayer.value & (1 << collision.gameObject.layer)) != 0;
-        }
-        else
-        {
-            // Fallback: detect by tag so collisions are still scored even if the
-            // obstacleLayer has not been assigned in the Inspector yet.
-            isObstacle = collision.gameObject.CompareTag("Obstacle");
-        }
-
-        if (isObstacle && ShouldRecordCollision(collision.collider))
-            miniGame2Manager?.RecordCollision();
-    }
-
-    private void OnControllerColliderHit(ControllerColliderHit hit)
-    {
-        // CharacterController-based collision callback (works without Rigidbody).
-        if (hit == null || hit.collider == null) return;
-
-        GameObject other = hit.collider.gameObject;
-        bool isObstacle;
-        if (obstacleLayer.value != 0)
-        {
-            isObstacle = (obstacleLayer.value & (1 << other.layer)) != 0;
-        }
-        else
-        {
-            isObstacle = other.CompareTag("Obstacle");
-        }
-
-        if (isObstacle && ShouldRecordCollision(hit.collider))
-            miniGame2Manager?.RecordCollision();
-    }
-
-    private bool ShouldRecordCollision(Collider collider)
-    {
-        if (collider == null)
-            return false;
-
-        int key = collider.GetInstanceID();
-        float now = Time.time;
-        if (lastCollisionTimesByCollider.TryGetValue(key, out float lastTime))
-        {
-            if (now - lastTime <= collisionDedupWindowSeconds)
-                return false;
-        }
-
-        lastCollisionTimesByCollider[key] = now;
-        return true;
     }
 
     private void ValidateRuntimeInvariants()

@@ -17,7 +17,6 @@ public class MiniGame2Manager : MonoBehaviour
     [Tooltip("Optional. If null, start coordinate is inferred from robot position at Start().")]
     [SerializeField] private Transform startPoint;
     [SerializeField] private Transform audioCardTarget;
-    [SerializeField] private Transform chargingStationTarget;
     [SerializeField] private Transform robot;
 
     [Header("Logging / Feedback")]
@@ -41,13 +40,12 @@ public class MiniGame2Manager : MonoBehaviour
 
     private MiniGame2Phase phase = MiniGame2Phase.Idle;
     private bool cardReached;
-    private bool chargerReached;
+    private bool cardInteracted;
     private bool hasLoggedInefficiency;
     private bool hasLoggedEnergyCritical;
 
     private Vector2Int startCoord;
     private Vector2Int cardCoord;
-    private Vector2Int chargerCoord;
 
     private float totalActualEnergy;
     private float remainingEnergy;
@@ -55,7 +53,6 @@ public class MiniGame2Manager : MonoBehaviour
     private List<Vector2Int> idealPath;
     private readonly List<Vector2Int> actualPath = new List<Vector2Int>(256);
     private Vector2Int? lastVisited;
-    private int collisionCount;
     private bool miniGameEnded;
     private bool endedByEnergyDepletion;
 
@@ -70,6 +67,7 @@ public class MiniGame2Manager : MonoBehaviour
     public float IdealEnergy => idealEnergy;
     public float ActualEnergy => totalActualEnergy;
     public float RemainingEnergy => remainingEnergy;
+    public bool IsMiniGameRunning => phase == MiniGame2Phase.Planning || phase == MiniGame2Phase.RobotMoving;
     public MiniGame2EvaluationResult LastResult { get; private set; }
     public bool HasPassedLastRun
     {
@@ -153,10 +151,9 @@ public class MiniGame2Manager : MonoBehaviour
     public void StartMiniGame()
     {
         cardReached = false;
-        chargerReached = false;
+        cardInteracted = false;
         hasLoggedInefficiency = false;
         hasLoggedEnergyCritical = false;
-        collisionCount = 0;
         totalActualEnergy = 0f;
         remainingEnergy = startingEnergyBudget;
         idealEnergy = 0f;
@@ -172,17 +169,15 @@ public class MiniGame2Manager : MonoBehaviour
         if (gridManager != null)
         {
             gridManager.BuildGrid();
-            (idealPath, idealEnergy) = gridManager.FindIdealFullPath(startCoord, cardCoord, chargerCoord);
+            idealPath = gridManager.FindIdealPath(startCoord, cardCoord);
+            idealEnergy = gridManager.GetPathEnergy(idealPath);
         }
 
-        Log($"[MG2] Start. start={startCoord.x},{startCoord.y} card={cardCoord.x},{cardCoord.y} charger={chargerCoord.x},{chargerCoord.y} idealEnergy={idealEnergy:F2} idealSteps={(idealPath != null ? idealPath.Count : 0)} budget={(useEnergyBudget ? startingEnergyBudget.ToString("F2") : "off")}");
+        Log($"[MG2] Start. start={startCoord.x},{startCoord.y} card={cardCoord.x},{cardCoord.y} idealEnergy={idealEnergy:F2} idealSteps={(idealPath != null ? idealPath.Count : 0)} budget={(useEnergyBudget ? startingEnergyBudget.ToString("F2") : "off")}");
         if (debugScoringToConsole)
         {
             if (idealPath == null || idealPath.Count == 0)
                 Debug.LogWarning("[MG2][Scoring] Ideal path could not be generated. Evaluation will still run but efficiency scores may be 0.", this);
-
-            if (cardCoord == chargerCoord)
-                Debug.LogWarning("[MG2][Scoring] Audio card and charger coords are identical. Completion may happen immediately after card reach.", this);
         }
         SetPhase(MiniGame2Phase.Planning);
     }
@@ -193,7 +188,6 @@ public class MiniGame2Manager : MonoBehaviour
         {
             startCoord = Vector2Int.zero;
             cardCoord = Vector2Int.zero;
-            chargerCoord = Vector2Int.zero;
             return;
         }
 
@@ -202,8 +196,6 @@ public class MiniGame2Manager : MonoBehaviour
 
         if (audioCardTarget != null)
             cardCoord = gridManager.WorldToGrid(audioCardTarget.position);
-        if (chargingStationTarget != null)
-            chargerCoord = gridManager.WorldToGrid(chargingStationTarget.position);
     }
 
     private void SetPhase(MiniGame2Phase next)
@@ -238,7 +230,7 @@ public class MiniGame2Manager : MonoBehaviour
 
     public void RecordTileVisit(Vector2Int coord, float cost, bool isSaving)
     {
-        if (miniGameEnded || chargerReached) return;
+        if (miniGameEnded) return;
 
         if (lastVisited.HasValue && lastVisited.Value == coord)
             return;
@@ -259,16 +251,7 @@ public class MiniGame2Manager : MonoBehaviour
             cardReached = true;
             Log("[MG2] Audio card reached");
             LogCheckpointSummary("Audio card checkpoint");
-            if (debugScoringToConsole)
-                Debug.Log("[MG2][Scoring] Evaluation is final only after reaching the charging station.", this);
-        }
-
-        if (cardReached && !chargerReached && coord == chargerCoord)
-        {
-            chargerReached = true;
-            Log("[MG2] Charging station reached");
-            CompleteMiniGame();
-            return;
+            LogMessage?.Invoke("Audio card in range - press E to interact");
         }
 
         // Feedback heuristics.
@@ -285,9 +268,30 @@ public class MiniGame2Manager : MonoBehaviour
         }
     }
 
-    public void RecordCollision()
+    public bool TryInteractWithAudioCard(Vector2Int robotCoord)
     {
-        // Collision tracking is disabled for scoring in MG2.
+        if (miniGameEnded)
+            return false;
+
+        if (cardInteracted)
+            return false;
+
+        if (!cardReached)
+        {
+            LogMessage?.Invoke("Reach the audio card first");
+            return false;
+        }
+
+        if (robotCoord != cardCoord)
+        {
+            LogMessage?.Invoke("Move onto the audio card tile to interact");
+            return false;
+        }
+
+        cardInteracted = true;
+        Log("[MG2] Audio card interacted");
+        CompleteMiniGame();
+        return true;
     }
 
     private void CompleteMiniGame()
@@ -375,7 +379,7 @@ public class MiniGame2Manager : MonoBehaviour
         {
             endedByEnergyDepletion = true;
             LogMessage?.Invoke("Energy depleted - mission failed");
-            Log("[MG2] Energy depleted before reaching charger");
+            Log("[MG2] Energy depleted before reaching audio card");
             CompleteMiniGame();
         }
     }
@@ -416,7 +420,7 @@ public class MiniGame2Manager : MonoBehaviour
             : (idealSteps > 0 && actualSteps > 0 ? Mathf.Clamp(((float)idealSteps / actualSteps) * 100f, 0f, 100f) : 0f);
 
         float final = learningProfile != null
-            ? learningProfile.ComputeFinalScoreWithoutCollision(energyScore, pathScore)
+            ? learningProfile.ComputeFinalScore(energyScore, pathScore)
             : Mathf.Clamp((energyScore + pathScore) * 0.5f, 0f, 100f);
 
         MiniGameTier tier = learningProfile != null ? learningProfile.GetTier(final) : (final >= 85f ? MiniGameTier.Excellent : final >= 70f ? MiniGameTier.Good : final >= 50f ? MiniGameTier.Average : MiniGameTier.Fail);
@@ -427,10 +431,8 @@ public class MiniGame2Manager : MonoBehaviour
             tier = tier,
             energyEfficiencyScore = energyScore,
             pathEfficiencyScore = pathScore,
-            collisionSafetyScore = 0f,
             actualEnergy = totalActualEnergy,
             idealEnergy = idealEnergy,
-            collisionCount = 0,
             actualStepCount = actualSteps,
             idealStepCount = idealSteps
         };

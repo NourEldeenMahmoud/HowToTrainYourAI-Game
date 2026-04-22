@@ -28,6 +28,9 @@ public class IntroRobotController : MonoBehaviour
     [SerializeField] private string[] robotPovKeepChildNames = { "Message Panel button", "TimerText", "Energy Bar", "Instruction Text (1)" };
     [Tooltip("(Optional) Assign instead of using robotPovCanvasRoot + keepNames. Filled at runtime if empty.")]
     [SerializeField] private GameObject[] robotPovHideOnIntro;
+    [Tooltip("Direct children of Robot POV root to keep hidden until MiniGame1 completes.")]
+    [SerializeField] private string[] keepHiddenUntilMiniGame1CompletedNames = { "Movement Buttons" };
+    [SerializeField] private GameObject[] robotPovHideUntilMiniGame1Completed;
 
     [Header("Message Panel Button (auto-found by name if null)")]
     [Tooltip("The 'Message Panel button' in Robot POV Canvas. Auto-found by name if null.")]
@@ -70,7 +73,11 @@ public class IntroRobotController : MonoBehaviour
         if (startMiniGame1 != null)
             startMiniGame1.SetStartOnRobotControl(false);
 
+        if (controlManager != null)
+            controlManager.SetSwitchEnabled(false);
+
         ResolveRobotPovHideList();
+        ResolveHideUntilMiniGame1CompletedList();
         ResolveMessagePanelButton();
         ResolveRobotMessagesCanvasRefs();
     }
@@ -99,6 +106,28 @@ public class IntroRobotController : MonoBehaviour
                 toHide.Add(child.gameObject);
         }
         robotPovHideOnIntro = toHide.ToArray();
+    }
+
+    private void ResolveHideUntilMiniGame1CompletedList()
+    {
+        if (robotPovHideUntilMiniGame1Completed != null && robotPovHideUntilMiniGame1Completed.Length > 0)
+            return;
+
+        if (robotPovCanvasRoot == null)
+            return;
+
+        var toHide = new List<GameObject>();
+        foreach (string childName in keepHiddenUntilMiniGame1CompletedNames)
+        {
+            if (string.IsNullOrEmpty(childName))
+                continue;
+
+            Transform child = robotPovCanvasRoot.transform.Find(childName);
+            if (child != null && !toHide.Contains(child.gameObject))
+                toHide.Add(child.gameObject);
+        }
+
+        robotPovHideUntilMiniGame1Completed = toHide.ToArray();
     }
 
     private void ResolveMessagePanelButton()
@@ -204,6 +233,11 @@ public class IntroRobotController : MonoBehaviour
         {
             controlManager.ControlStateChanged += OnControlStateChanged;
         }
+
+        if (miniGame1Manager != null)
+        {
+            miniGame1Manager.MiniGameCompleted += OnMiniGame1Completed;
+        }
     }
 
     private void OnDisable()
@@ -211,6 +245,12 @@ public class IntroRobotController : MonoBehaviour
         if (controlManager != null)
         {
             controlManager.ControlStateChanged -= OnControlStateChanged;
+            controlManager.SetSwitchEnabled(true);
+        }
+
+        if (miniGame1Manager != null)
+        {
+            miniGame1Manager.MiniGameCompleted -= OnMiniGame1Completed;
         }
     }
 
@@ -224,11 +264,14 @@ public class IntroRobotController : MonoBehaviour
         hasTriggered = true;
 
         // Hide all Robot POV elements except Message button, TimerText and Energy Bar.
-        foreach (GameObject go in robotPovHideOnIntro)
+        if (robotPovHideOnIntro != null)
         {
-            if (go != null)
+            foreach (GameObject go in robotPovHideOnIntro)
             {
-                go.SetActive(false);
+                if (go != null)
+                {
+                    go.SetActive(false);
+                }
             }
         }
 
@@ -267,6 +310,9 @@ public class IntroRobotController : MonoBehaviour
 
     private void OnMessagePanelButtonClicked()
     {
+        if (controlManager != null)
+            controlManager.SetSwitchEnabled(true);
+
         if (robotMessagesCanvas != null)
         {
             robotMessagesCanvas.SetActive(true);
@@ -293,14 +339,29 @@ public class IntroRobotController : MonoBehaviour
         if (robotMessagesCanvas != null)
             robotMessagesCanvas.SetActive(false);
 
+        if (controlManager != null)
+            controlManager.SetSwitchEnabled(false);
+
         ShowCursor(false);
 
         // Restore all hidden Robot POV elements.
-        foreach (GameObject go in robotPovHideOnIntro)
+        if (robotPovHideOnIntro != null)
         {
-            if (go != null)
+            foreach (GameObject go in robotPovHideOnIntro)
             {
-                go.SetActive(true);
+                if (go != null)
+                {
+                    go.SetActive(true);
+                }
+            }
+        }
+
+        if (robotPovHideUntilMiniGame1Completed != null)
+        {
+            foreach (GameObject go in robotPovHideUntilMiniGame1Completed)
+            {
+                if (go != null)
+                    go.SetActive(false);
             }
         }
 
@@ -316,7 +377,20 @@ public class IntroRobotController : MonoBehaviour
             miniGame1Manager.StartMiniGame();
         }
 
-        // This controller has done its job.
-        enabled = false;
+    }
+
+    private void OnMiniGame1Completed(MiniGame1EvaluationResult result)
+    {
+        if (controlManager != null)
+            controlManager.SetSwitchEnabled(true);
+
+        if (robotPovHideUntilMiniGame1Completed == null)
+            return;
+
+        foreach (GameObject go in robotPovHideUntilMiniGame1Completed)
+        {
+            if (go != null)
+                go.SetActive(true);
+        }
     }
 }

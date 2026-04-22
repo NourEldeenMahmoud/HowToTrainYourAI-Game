@@ -9,6 +9,8 @@ public class SlideUI : MonoBehaviour
     public Text uiText;                  // Regular UI Text
     public TMP_Text uiTMPText;           // Or TextMeshPro (assign one)
     public float charsPerSecond = 50f;   // Speed of letter appearance (higher = faster)
+    public bool revealOnStart = true;
+    public bool triggerWithSpace = false;
 
     private string fullText;
     private bool isRevealing = false;
@@ -34,12 +36,15 @@ public class SlideUI : MonoBehaviour
         {
             Debug.LogError("No Text or TMP_Text component found on " + gameObject.name);
         }
+
+        if (revealOnStart)
+            ShowUI();
     }
 
     void Update()
     {
         // Test trigger (press Space to start revealing)
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (triggerWithSpace && Input.GetKeyDown(KeyCode.Space))
         {
             ShowUI();
         }

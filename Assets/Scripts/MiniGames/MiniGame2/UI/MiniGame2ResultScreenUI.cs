@@ -27,12 +27,10 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
     [Header("UI - Bars (Scrollbars)")]
     [SerializeField] private Scrollbar energyEfficiencyBar;
     [SerializeField] private Scrollbar pathEfficiencyBar;
-    [SerializeField] private Scrollbar collisionSafetyBar;
 
     [Header("Behavior")]
     [SerializeField] private bool lockControlsWhileVisible = true;
     [SerializeField] private bool debugToConsole = true;
-    [SerializeField] private bool showCollisionMetric = false;
 
     private void OnEnable()
     {
@@ -108,12 +106,6 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
 
         ApplyBar(energyEfficiencyBar, r.energyEfficiencyScore);
         ApplyBar(pathEfficiencyBar, r.pathEfficiencyScore);
-        if (collisionSafetyBar != null)
-        {
-            collisionSafetyBar.gameObject.SetActive(showCollisionMetric);
-            if (showCollisionMetric)
-                ApplyBar(collisionSafetyBar, r.collisionSafetyScore);
-        }
     }
 
     private static void ApplyBar(Scrollbar bar, float score0To100)

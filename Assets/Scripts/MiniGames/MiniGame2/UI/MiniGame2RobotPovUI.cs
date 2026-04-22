@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MiniGame2RobotPovUI : MonoBehaviour
 {
@@ -20,9 +21,14 @@ public class MiniGame2RobotPovUI : MonoBehaviour
     [SerializeField] private bool autoFind = true;
     [SerializeField, Min(1)] private int maxLogLines = 6;
     [SerializeField, Min(5)] private int maxCharsPerLine = 28;
+    [SerializeField] private bool autoFindTabButton = true;
+    [SerializeField] private Button tabSwitchButton;
+    [SerializeField, Range(0f, 1f)] private float disabledTabAlpha = 0.35f;
 
     private MiniGame2Phase lastPhase = MiniGame2Phase.Idle;
     private readonly List<string> logLines = new List<string>();
+    private Graphic tabSwitchButtonGraphic;
+    private float tabSwitchOriginalAlpha = 1f;
 
     private void OnEnable()
     {
@@ -38,16 +44,26 @@ public class MiniGame2RobotPovUI : MonoBehaviour
             miniGame2Manager = FindFirstObjectByType<MiniGame2Manager>();
         }
 
+        if (autoFindTabButton)
+            AutoFindTabSwitchButton();
+
+        CacheTabButtonGraphic();
+
         if (miniGame2Manager != null)
         {
             miniGame2Manager.PhaseChanged += OnPhaseChanged;
             miniGame2Manager.LogMessage += AppendLog;
             OnPhaseChanged(miniGame2Manager.CurrentPhase);
+
+            bool disableTab = miniGame2Manager.CurrentPhase == MiniGame2Phase.Planning || miniGame2Manager.CurrentPhase == MiniGame2Phase.RobotMoving;
+            SetTabButtonVisualEnabled(!disableTab);
         }
     }
 
     private void OnDisable()
     {
+        SetTabButtonVisualEnabled(true);
+
         if (miniGame2Manager != null)
         {
             miniGame2Manager.PhaseChanged -= OnPhaseChanged;
@@ -90,6 +106,9 @@ public class MiniGame2RobotPovUI : MonoBehaviour
             default:
                 break;
         }
+
+        bool disableTab = phase == MiniGame2Phase.Planning || phase == MiniGame2Phase.RobotMoving;
+        SetTabButtonVisualEnabled(!disableTab);
     }
 
     private void SetChallengeName(string name)
@@ -219,5 +238,68 @@ public class MiniGame2RobotPovUI : MonoBehaviour
 
         return null;
     }
-}
 
+    private void AutoFindTabSwitchButton()
+    {
+        if (tabSwitchButton != null)
+            return;
+
+        Transform root = povUiRoot != null ? povUiRoot : transform;
+        if (root == null)
+            return;
+
+        Button[] allButtons = root.GetComponentsInChildren<Button>(true);
+        for (int i = 0; i < allButtons.Length; i++)
+        {
+            Button button = allButtons[i];
+            if (button == null)
+                continue;
+
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label == null)
+                continue;
+
+            string text = label.text != null ? label.text.Trim() : string.Empty;
+            if (text.Equals("tab", StringComparison.OrdinalIgnoreCase) || text.IndexOf("tab", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                tabSwitchButton = button;
+                break;
+            }
+        }
+    }
+
+    private void CacheTabButtonGraphic()
+    {
+        if (tabSwitchButton == null)
+            return;
+
+        if (tabSwitchButtonGraphic != null)
+            return;
+
+        tabSwitchButtonGraphic = tabSwitchButton.targetGraphic;
+        if (tabSwitchButtonGraphic == null)
+            return;
+
+        tabSwitchOriginalAlpha = tabSwitchButtonGraphic.color.a;
+    }
+
+    private void SetTabButtonVisualEnabled(bool enabled)
+    {
+        if (tabSwitchButton == null)
+            return;
+
+        tabSwitchButton.gameObject.SetActive(enabled);
+        if (!enabled)
+            return;
+
+        tabSwitchButton.interactable = enabled;
+
+        CacheTabButtonGraphic();
+        if (tabSwitchButtonGraphic == null)
+            return;
+
+        Color color = tabSwitchButtonGraphic.color;
+        color.a = enabled ? tabSwitchOriginalAlpha : Mathf.Min(tabSwitchOriginalAlpha, disabledTabAlpha);
+        tabSwitchButtonGraphic.color = color;
+    }
+}

@@ -62,6 +62,7 @@ public class MiniGame1Manager : MonoBehaviour
     public MiniGame1Phase CurrentPhase => phase;
     public RobotStatsSO RobotStats => robotStats;
     public bool HasPassedLastRun => LastResult.finalScore >= 50f;
+    public bool IsMiniGameRunning => isRunning && phase != MiniGame1Phase.Completed;
 
     private void Start()
     {
@@ -272,4 +273,3 @@ public class MiniGame1Manager : MonoBehaviour
             yield return null;
     }
 }
-
