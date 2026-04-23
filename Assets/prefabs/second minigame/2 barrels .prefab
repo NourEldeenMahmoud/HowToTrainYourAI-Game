@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1982659999155087840}
   - component: {fileID: 7694093639208261865}
   - component: {fileID: 6631846026717868635}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrelWine (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -100,7 +100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8588762984484892056}
   - component: {fileID: 2807211750605361229}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: '2 barrels '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -143,8 +143,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.47, y: 1.86, z: 1.13}
-  m_Center: {x: -1.67, y: -0.12, z: 3.92}
+  m_Size: {x: 1.2142045, y: 1.8600004, z: 0.9481349}
+  m_Center: {x: -1.7978977, y: -0.119999975, z: 3.8290675}
 --- !u!1 &8878818526184471704
 GameObject:
   m_ObjectHideFlags: 0
@@ -156,7 +156,7 @@ GameObject:
   - component: {fileID: 3062331451833117889}
   - component: {fileID: 5171344513428942643}
   - component: {fileID: 5188283683219895200}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BarrelWine (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

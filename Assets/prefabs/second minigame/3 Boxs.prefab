@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5836875220009605292}
   - component: {fileID: 8330255713018118263}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: 3 Boxs
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -54,8 +54,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.5143356, y: 1.450568, z: 1.558197}
-  m_Center: {x: -0.06358147, y: -0.22528419, z: 0.2790985}
+  m_Size: {x: 1.2748213, y: 1.450568, z: 1.3469049}
+  m_Center: {x: -0.18333864, y: -0.22528414, z: 0.17345244}
 --- !u!1 &2613853430741543541
 GameObject:
   m_ObjectHideFlags: 0
@@ -67,7 +67,7 @@ GameObject:
   - component: {fileID: 5471047641986052283}
   - component: {fileID: 7435376862102968270}
   - component: {fileID: 4541465881312115867}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CrateWood2 (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -157,7 +157,7 @@ GameObject:
   - component: {fileID: 433278175553638112}
   - component: {fileID: 7179018964466096711}
   - component: {fileID: 5824598091856039726}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CrateWood2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -247,7 +247,7 @@ GameObject:
   - component: {fileID: 4298848935733143902}
   - component: {fileID: 7064358221407046540}
   - component: {fileID: 5685482055231899925}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CrateWood2 (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}

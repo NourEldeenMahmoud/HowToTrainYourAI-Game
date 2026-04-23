@@ -1215,7 +1215,7 @@ MonoBehaviour:
   rotationRoot: {fileID: 941749877}
   robotAnimator: {fileID: 761745869}
   followDistance: 2
-  followSpeed: 0.5
+  followSpeed: 1
   rotationSpeed: 8
   invertVisualForward: 0
   gravity: -9.81
@@ -2338,6 +2338,9 @@ MonoBehaviour:
   - Energy Bar
   - Instruction Text (1)
   robotPovHideOnIntro: []
+  keepHiddenUntilMiniGame1CompletedNames:
+  - Movement Buttons
+  robotPovHideUntilMiniGame1Completed: []
   messagePanelButton: {fileID: 238878386}
   robotMessagesCanvas: {fileID: 1995968229}
   messageBodyText: {fileID: 0}

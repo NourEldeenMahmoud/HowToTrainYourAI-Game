@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6275002070244633179}
   - component: {fileID: 8758474702404320123}
   - component: {fileID: 2210408016680256669}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CrateWood (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -101,7 +101,7 @@ GameObject:
   - component: {fileID: 9024093770448729450}
   - component: {fileID: 3155086863609453623}
   - component: {fileID: 2448701544041114212}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CrateWood (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -191,7 +191,7 @@ GameObject:
   - component: {fileID: 3224165178841478083}
   - component: {fileID: 1885486717578055092}
   - component: {fileID: 6150327810250007117}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PropaneTankSmall (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -280,7 +280,7 @@ GameObject:
   m_Component:
   - component: {fileID: 166942646434732165}
   - component: {fileID: 3738163199433363810}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: 'Boxs and gas '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -341,7 +341,7 @@ GameObject:
   - component: {fileID: 4092340378136489673}
   - component: {fileID: 6374666278453472337}
   - component: {fileID: 6884656243808861502}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CrateWood (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -431,7 +431,7 @@ GameObject:
   - component: {fileID: 5925034329838111060}
   - component: {fileID: 3772439667322377411}
   - component: {fileID: 9108874041972025950}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Jerrycan (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -521,7 +521,7 @@ GameObject:
   - component: {fileID: 5448496759270599087}
   - component: {fileID: 5362600877913528283}
   - component: {fileID: 4331430098718605060}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CrateWood (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -611,7 +611,7 @@ GameObject:
   - component: {fileID: 3868988391640134377}
   - component: {fileID: 3872094642957623559}
   - component: {fileID: 4351237911768225804}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PropaneTankSmall (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
