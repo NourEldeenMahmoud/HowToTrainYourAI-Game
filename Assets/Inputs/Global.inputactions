@@ -1,0 +1,35 @@
+{
+    "version": 1,
+    "name": "Global",
+    "maps": [
+        {
+            "name": "Switch",
+            "id": "eaf8a00d-92d8-4aa8-ae93-250fe8e292a5",
+            "actions": [
+                {
+                    "name": "Switch",
+                    "type": "Button",
+                    "id": "411a24b2-8f87-4668-b311-f752551f5aab",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "aae6c8e0-a760-4b4c-901b-c289a696ed1e",
+                    "path": "<Keyboard>/tab",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Switch",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
