@@ -1,7 +1,9 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class MiniGame2ResultScreenUI : MonoBehaviour
@@ -9,42 +11,70 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
     [Header("References")]
     [SerializeField] private MiniGame2Manager miniGame2Manager;
     [SerializeField] private ControlManager controlManager;
-
-    [Tooltip("Root of the result screen UI (can be inactive at startup). If null, will use this GameObject.")]
     [SerializeField] private GameObject resultScreenRoot;
+
+    [Header("Discovery")]
+    [SerializeField] private bool autoFindOnEnable = true;
+    [SerializeField] private string resultCanvasName = "Game2 Result Screen Canvas";
 
     [Header("UI - Texts")]
     [SerializeField] private TMP_Text finalScoreText;
+    [SerializeField] private TMP_Text energyEfficiencyPercentText;
+    [SerializeField] private TMP_Text routeQualityPercentText;
+    [SerializeField] private TMP_Text movesTakenText;
+    [SerializeField] private TMP_Text missionOutcomeText;
+    [SerializeField] private TMP_Text missionDetailsText;
+    [SerializeField] private TMP_Text usedEnergyValueText;
+    [SerializeField] private TMP_Text totalEnergyBudgetText;
     [SerializeField] private TMP_Text tierText;
-    [SerializeField] private TMP_Text actualEnergyText;
-    [SerializeField] private TMP_Text idealEnergyText;
-    [SerializeField] private TMP_Text efficiencyPercentText;
 
     [Header("UI - Buttons")]
-    [SerializeField] private Button applyImprovementsButton;
     [SerializeField] private Button retryButton;
+    [SerializeField] private Button nextButton;
 
-    [Header("UI - Bars (Scrollbars)")]
-    [SerializeField] private Scrollbar energyEfficiencyBar;
-    [SerializeField] private Scrollbar pathEfficiencyBar;
+    [Header("UI - Bars (Sliders)")]
+    [SerializeField] private Slider energyEfficiencyBar;
+    [SerializeField] private Slider pathEfficiencyBar;
+    [SerializeField] private Slider finalScoreBar;
+
+    [Header("Outcome Copy")]
+    [SerializeField] private string winTitle = "MISSION COMPLETE!";
+    [TextArea]
+    [SerializeField] private string winDetails = "GOOD JOB!\n\nYou saved energy and reached the goal successfully.";
+    [SerializeField] private string loseTitle = "MISSION FAILED!";
+    [TextArea]
+    [SerializeField] private string loseDetails = "MISSION FAILED!\n\nEnergy ran out before you reached the audio card.";
 
     [Header("Behavior")]
     [SerializeField] private bool lockControlsWhileVisible = true;
+    [SerializeField] private bool hideScreenOnEnable = true;
+    [SerializeField] private bool disableNextButton = true;
     [SerializeField] private bool debugToConsole = true;
 
     private void OnEnable()
     {
-        if (resultScreenRoot == null) resultScreenRoot = gameObject;
-        if (controlManager == null) controlManager = FindFirstObjectByType<ControlManager>();
-        if (miniGame2Manager == null) miniGame2Manager = FindFirstObjectByType<MiniGame2Manager>();
+        ResolveCoreReferences();
+
+        if (autoFindOnEnable)
+            AutoFind();
+
+        RebindButtons();
+        ConfigureNextButtonState();
 
         if (miniGame2Manager != null)
+        {
+            miniGame2Manager.MiniGameCompleted -= OnMiniGameCompleted;
             miniGame2Manager.MiniGameCompleted += OnMiniGameCompleted;
 
-        if (applyImprovementsButton != null)
-            applyImprovementsButton.onClick.AddListener(OnApplyImprovementsClicked);
-        if (retryButton != null)
-            retryButton.onClick.AddListener(OnRetryClicked);
+            if (miniGame2Manager.CurrentPhase == MiniGame2Phase.Completed)
+            {
+                OnMiniGameCompleted(miniGame2Manager.LastResult);
+                return;
+            }
+        }
+
+        if (hideScreenOnEnable)
+            SetResultScreenVisible(false);
     }
 
     private void OnDisable()
@@ -52,65 +82,192 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
         if (miniGame2Manager != null)
             miniGame2Manager.MiniGameCompleted -= OnMiniGameCompleted;
 
-        if (applyImprovementsButton != null)
-            applyImprovementsButton.onClick.RemoveListener(OnApplyImprovementsClicked);
         if (retryButton != null)
             retryButton.onClick.RemoveListener(OnRetryClicked);
+
+        if (nextButton != null)
+            nextButton.onClick.RemoveListener(OnNextClicked);
+    }
+
+    private void ResolveCoreReferences()
+    {
+        if (miniGame2Manager == null)
+            miniGame2Manager = FindFirstObjectByType<MiniGame2Manager>();
+
+        if (controlManager == null)
+            controlManager = FindFirstObjectByType<ControlManager>();
+
+        if (resultScreenRoot != null)
+            return;
+
+        resultScreenRoot = FindGameObjectByNameIncludingInactive(resultCanvasName);
+        if (resultScreenRoot != null)
+            return;
+
+        resultScreenRoot = FindGameObjectByNameFragmentIncludingInactive("Result Screen Canvas");
+        if (resultScreenRoot != null)
+            return;
+
+        Canvas canvasInChildren = GetComponentInChildren<Canvas>(true);
+        if (canvasInChildren != null)
+            resultScreenRoot = canvasInChildren.gameObject;
+    }
+
+    private void AutoFind()
+    {
+        Transform root = resultScreenRoot != null ? resultScreenRoot.transform : null;
+        if (root == null)
+            return;
+
+        if (finalScoreText == null)
+            finalScoreText = FindTMPByName(root, "Final Result Number");
+
+        if (energyEfficiencyPercentText == null)
+            energyEfficiencyPercentText = FindTMPByName(root, "Energy Efficiency Number");
+
+        if (routeQualityPercentText == null)
+            routeQualityPercentText = FindTMPByName(root, "Route Quality Number");
+
+        if (movesTakenText == null)
+            movesTakenText = FindTMPByName(root, "Moves Taken Number");
+
+        if (missionOutcomeText == null)
+            missionOutcomeText = FindTMPByName(root, "Mission Complete Text");
+
+        if (missionDetailsText == null)
+            missionDetailsText = FindTMPContains(root, "You saved energy");
+
+        Transform energySection = FindChildByName(root, "Energy Efficiency");
+        Transform scopedRoot = energySection != null ? energySection : root;
+
+        if (usedEnergyValueText == null)
+            usedEnergyValueText = FindTMPByName(scopedRoot, "Text 2");
+
+        if (totalEnergyBudgetText == null)
+            totalEnergyBudgetText = FindTMPByName(scopedRoot, "Text 4") ?? FindTMPContains(scopedRoot, "energy.");
+
+        if (retryButton == null)
+            retryButton = FindButtonByName(root, "Retry Button") ?? FindButtonWithLabel(root, "Retry");
+
+        if (nextButton == null)
+            nextButton = FindButtonByName(root, "Next Button") ?? FindButtonWithLabel(root, "Next");
+
+        if (energyEfficiencyBar == null)
+            energyEfficiencyBar = FindSliderByName(root, "Energy Slider");
+
+        if (pathEfficiencyBar == null)
+            pathEfficiencyBar = FindSliderByName(root, "Route Slider");
+
+        if (finalScoreBar == null)
+            finalScoreBar = FindSliderByName(root, "Final Result Slider");
+    }
+
+    private void RebindButtons()
+    {
+        if (retryButton != null)
+        {
+            retryButton.onClick.RemoveListener(OnRetryClicked);
+            retryButton.onClick.AddListener(OnRetryClicked);
+        }
+
+        if (nextButton != null)
+        {
+            nextButton.onClick.RemoveListener(OnNextClicked);
+            nextButton.onClick.AddListener(OnNextClicked);
+        }
     }
 
     private void OnMiniGameCompleted(MiniGame2EvaluationResult result)
     {
-        EnsureEventSystemExists();
-
-        if (debugToConsole)
+        if (resultScreenRoot == null)
         {
-            Debug.Log($"[MG2][ResultUI] MiniGameCompleted received. final={result.finalScore:F1} tier={result.tier}", this);
-            if (resultScreenRoot == null)
-                Debug.LogWarning("[MG2][ResultUI] resultScreenRoot is null. Falling back to this GameObject.", this);
+            ResolveCoreReferences();
+            if (autoFindOnEnable)
+                AutoFind();
         }
 
-        if (resultScreenRoot != null)
-            resultScreenRoot.SetActive(true);
+        EnsureEventSystemExists();
+
+        SetResultScreenVisible(true);
 
         if (lockControlsWhileVisible && controlManager != null)
             controlManager.SetInputLocked(true);
 
+        ConfigureNextButtonState();
         ApplyResult(result);
 
         if (debugToConsole)
-            Debug.Log("[MG2][ResultUI] Result values applied to UI fields (where assigned).", this);
+            Debug.Log($"[MG2][ResultUI] Result shown. final={result.finalScore:F1} tier={result.tier} success={result.isSuccess} energyFail={result.failedByEnergyDepletion}", this);
     }
 
     private void EnsureEventSystemExists()
     {
-        if (EventSystem.current != null) return;
+        if (EventSystem.current != null)
+            return;
 
         GameObject esGo = new GameObject("EventSystem");
         esGo.AddComponent<EventSystem>();
         esGo.AddComponent<InputSystemUIInputModule>();
     }
 
-    private void ApplyResult(MiniGame2EvaluationResult r)
+    private void ApplyResult(MiniGame2EvaluationResult result)
     {
-        if (finalScoreText != null) finalScoreText.text = $"{Mathf.RoundToInt(r.finalScore)}%";
-        if (tierText != null) tierText.text = r.tier.ToString();
+        if (finalScoreText != null)
+            finalScoreText.text = $"{Mathf.RoundToInt(result.finalScore)}%";
 
-        if (actualEnergyText != null) actualEnergyText.text = r.actualEnergy.ToString("F2");
-        if (idealEnergyText != null) idealEnergyText.text = r.idealEnergy.ToString("F2");
+        if (energyEfficiencyPercentText != null)
+            energyEfficiencyPercentText.text = $"{Mathf.RoundToInt(result.energyEfficiencyScore)}%";
 
-        if (efficiencyPercentText != null)
+        if (routeQualityPercentText != null)
+            routeQualityPercentText.text = $"{Mathf.RoundToInt(result.pathEfficiencyScore)}%";
+
+        if (movesTakenText != null)
+            movesTakenText.text = result.actualStepCount.ToString();
+
+        if (tierText != null)
+            tierText.text = result.tier.ToString();
+
+        bool isLoseOutcome = !result.isSuccess;
+
+        if (missionOutcomeText != null)
+            missionOutcomeText.text = isLoseOutcome ? loseTitle : winTitle;
+
+        if (missionDetailsText != null)
+            missionDetailsText.text = isLoseOutcome ? loseDetails : winDetails;
+
+        if (usedEnergyValueText != null)
+            usedEnergyValueText.text = Mathf.RoundToInt(result.actualEnergy).ToString();
+
+        if (totalEnergyBudgetText != null)
         {
-            float pct = r.actualEnergy > 0f ? Mathf.Clamp((r.idealEnergy / r.actualEnergy) * 100f, 0f, 100f) : 0f;
-            efficiencyPercentText.text = $"{Mathf.RoundToInt(pct)}%";
+            float configuredBudget = miniGame2Manager != null ? miniGame2Manager.StartingEnergyBudget : 0f;
+            float displayBudget = configuredBudget > 0f ? configuredBudget : Mathf.Max(1f, result.actualEnergy);
+            totalEnergyBudgetText.text = $"{Mathf.RoundToInt(displayBudget)} energy.";
         }
 
-        ApplyBar(energyEfficiencyBar, r.energyEfficiencyScore);
-        ApplyBar(pathEfficiencyBar, r.pathEfficiencyScore);
+        ApplyBar(energyEfficiencyBar, result.energyEfficiencyScore);
+        ApplyBar(pathEfficiencyBar, result.pathEfficiencyScore);
+        ApplyBar(finalScoreBar, result.finalScore);
     }
 
-    private static void ApplyBar(Scrollbar bar, float score0To100)
+    private void ConfigureNextButtonState()
     {
-        if (bar == null) return;
+        if (nextButton == null)
+            return;
+
+        bool enabled = !disableNextButton;
+        nextButton.interactable = enabled;
+
+        Navigation nav = nextButton.navigation;
+        nav.mode = enabled ? Navigation.Mode.Automatic : Navigation.Mode.None;
+        nextButton.navigation = nav;
+    }
+
+    private static void ApplyBar(Slider bar, float score0To100)
+    {
+        if (bar == null)
+            return;
+
         float t = Mathf.Clamp01(score0To100 / 100f);
 
         bar.transition = Selectable.Transition.None;
@@ -119,36 +276,214 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
         nav.mode = Navigation.Mode.None;
         bar.navigation = nav;
 
-        Graphic barGraphic = bar.GetComponent<Graphic>();
-        if (barGraphic != null) barGraphic.raycastTarget = false;
-        if (bar.handleRect != null)
+        if (bar.fillRect != null)
         {
-            Graphic handleGraphic = bar.handleRect.GetComponent<Graphic>();
-            if (handleGraphic != null) handleGraphic.raycastTarget = false;
-            bar.handleRect.sizeDelta = Vector2.zero;
-            bar.handleRect.anchoredPosition = Vector2.zero;
+            Graphic fillGraphic = bar.fillRect.GetComponent<Graphic>();
+            if (fillGraphic != null)
+                fillGraphic.raycastTarget = false;
         }
 
-        bar.direction = Scrollbar.Direction.LeftToRight;
-        bar.size = t;
-        bar.value = 0f;
-    }
+        if (bar.targetGraphic != null)
+            bar.targetGraphic.raycastTarget = false;
 
-    private void OnApplyImprovementsClicked()
-    {
-        if (debugToConsole)
-            Debug.Log("[MG2][ResultUI] Apply Improvements clicked. Stats were already applied automatically at final evaluation.", this);
-
-        if (resultScreenRoot != null) resultScreenRoot.SetActive(false);
-        if (lockControlsWhileVisible && controlManager != null) controlManager.SetInputLocked(false);
+        bar.direction = Slider.Direction.LeftToRight;
+        bar.normalizedValue = t;
     }
 
     private void OnRetryClicked()
     {
-        if (miniGame2Manager != null)
-            miniGame2Manager.StartMiniGame();
+        Scene activeScene = SceneManager.GetActiveScene();
+        if (!activeScene.IsValid())
+            return;
 
-        if (resultScreenRoot != null) resultScreenRoot.SetActive(false);
-        if (lockControlsWhileVisible && controlManager != null) controlManager.SetInputLocked(false);
+        SceneManager.LoadScene(activeScene.buildIndex);
+    }
+
+    private void OnNextClicked()
+    {
+        if (debugToConsole)
+            Debug.Log("[MG2][ResultUI] Next clicked. Behavior intentionally disabled for now.", this);
+    }
+
+    private void SetResultScreenVisible(bool visible)
+    {
+        if (resultScreenRoot == null)
+            return;
+
+        if (!visible && resultScreenRoot == gameObject)
+        {
+            if (debugToConsole)
+                Debug.LogWarning("[MG2][ResultUI] resultScreenRoot points to this controller object; skipping hide to avoid disabling this script.", this);
+            return;
+        }
+
+        resultScreenRoot.SetActive(visible);
+
+        if (!visible)
+            return;
+
+        Transform rootTransform = resultScreenRoot.transform;
+        for (int i = 0; i < rootTransform.childCount; i++)
+        {
+            Transform child = rootTransform.GetChild(i);
+            if (child != null && !child.gameObject.activeSelf)
+                child.gameObject.SetActive(true);
+        }
+    }
+
+    private static GameObject FindGameObjectByNameIncludingInactive(string objectName)
+    {
+        if (string.IsNullOrEmpty(objectName))
+            return null;
+
+        GameObject active = GameObject.Find(objectName);
+        if (active != null)
+            return active;
+
+        Transform[] allTransforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < allTransforms.Length; i++)
+        {
+            Transform t = allTransforms[i];
+            if (t != null && t.gameObject.name.Equals(objectName, StringComparison.OrdinalIgnoreCase))
+                return t.gameObject;
+        }
+
+        return null;
+    }
+
+    private static GameObject FindGameObjectByNameFragmentIncludingInactive(string objectNameFragment)
+    {
+        if (string.IsNullOrEmpty(objectNameFragment))
+            return null;
+
+        Transform[] allTransforms = FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < allTransforms.Length; i++)
+        {
+            Transform t = allTransforms[i];
+            if (t == null)
+                continue;
+
+            if (t.gameObject.name.IndexOf(objectNameFragment, StringComparison.OrdinalIgnoreCase) >= 0)
+                return t.gameObject;
+        }
+
+        return null;
+    }
+
+    private static TMP_Text FindTMPByName(Transform root, string goName)
+    {
+        if (root == null)
+            return null;
+
+        Transform direct = root.Find(goName);
+        if (direct != null)
+            return direct.GetComponent<TMP_Text>();
+
+        TMP_Text[] all = root.GetComponentsInChildren<TMP_Text>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            TMP_Text tmp = all[i];
+            if (tmp != null && tmp.gameObject.name == goName)
+                return tmp;
+        }
+
+        return null;
+    }
+
+    private static Transform FindChildByName(Transform root, string name)
+    {
+        if (root == null)
+            return null;
+
+        if (root.name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            return root;
+
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform found = FindChildByName(root.GetChild(i), name);
+            if (found != null)
+                return found;
+        }
+
+        return null;
+    }
+
+    private static TMP_Text FindTMPContains(Transform root, string textFragment)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(textFragment))
+            return null;
+
+        TMP_Text[] all = root.GetComponentsInChildren<TMP_Text>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            TMP_Text tmp = all[i];
+            if (tmp != null && !string.IsNullOrEmpty(tmp.text) && tmp.text.IndexOf(textFragment, StringComparison.OrdinalIgnoreCase) >= 0)
+                return tmp;
+        }
+
+        return null;
+    }
+
+    private static Button FindButtonByName(Transform root, string goName)
+    {
+        if (root == null)
+            return null;
+
+        Transform direct = root.Find(goName);
+        if (direct != null)
+            return direct.GetComponent<Button>();
+
+        Button[] all = root.GetComponentsInChildren<Button>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            Button button = all[i];
+            if (button != null && button.gameObject.name == goName)
+                return button;
+        }
+
+        return null;
+    }
+
+    private static Button FindButtonWithLabel(Transform root, string labelText)
+    {
+        if (root == null)
+            return null;
+
+        TMP_Text[] all = root.GetComponentsInChildren<TMP_Text>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            TMP_Text tmp = all[i];
+            if (tmp == null)
+                continue;
+
+            if (!string.Equals(tmp.text, labelText, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            Button button = tmp.GetComponentInParent<Button>();
+            if (button != null)
+                return button;
+        }
+
+        return null;
+    }
+
+    private static Slider FindSliderByName(Transform root, string goName)
+    {
+        if (root == null)
+            return null;
+
+        Transform direct = root.Find(goName);
+        if (direct != null)
+            return direct.GetComponent<Slider>();
+
+        Slider[] all = root.GetComponentsInChildren<Slider>(true);
+        for (int i = 0; i < all.Length; i++)
+        {
+            Slider bar = all[i];
+            if (bar != null && bar.gameObject.name == goName)
+                return bar;
+        }
+
+        return null;
     }
 }

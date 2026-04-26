@@ -33,4 +33,8 @@ public struct MiniGame2EvaluationResult
     public float idealEnergy;
     public int actualStepCount;
     public int idealStepCount;
+
+    [Header("Outcome")]
+    public bool isSuccess;
+    public bool failedByEnergyDepletion;
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -44,6 +45,24 @@ public class MiniGame2Manager : MonoBehaviour
     [Tooltip("Force mouse cursor visible/unlocked while MiniGame2 is active so tile clicking remains usable.")]
     [SerializeField] private bool forceCursorVisibleForTileInput = true;
 
+    [Header("Intro Camera Sequence")]
+    [SerializeField] private bool playIntroCameraSequence = true;
+    [SerializeField] private MG2CinemachineTopDownInput introTopDownInput;
+    [Tooltip("Optional explicit start position for intro camera target movement.")]
+    [SerializeField] private Transform introStartMarker;
+    [Tooltip("Optional explicit focus position for intro camera target movement.")]
+    [SerializeField] private Transform introFocusMarker;
+    [SerializeField] private bool snapToIntroStartBeforeReveal = true;
+    [Tooltip("Optional fallback camera pose if Cinemachine target is unavailable.")]
+    [SerializeField] private Transform introStartCameraPose;
+    [Tooltip("Optional fallback camera focus pose if Cinemachine target is unavailable.")]
+    [SerializeField] private Transform introFocusCameraPose;
+    [SerializeField, Min(0f)] private float introDelayBeforeMove = 0.35f;
+    [SerializeField, Min(0.05f)] private float introMoveDuration = 1.4f;
+    [SerializeField, Min(0f)] private float introHoldDuration = 0.7f;
+    [SerializeField, Min(0f)] private float introDelayBeforeGameplay = 0.35f;
+    [SerializeField] private bool lockInputDuringIntro = true;
+
     private MiniGame2Phase phase = MiniGame2Phase.Idle;
     private bool cardReached;
     private bool cardInteracted;
@@ -61,10 +80,14 @@ public class MiniGame2Manager : MonoBehaviour
     private Vector2Int? lastVisited;
     private bool miniGameEnded;
     private bool endedByEnergyDepletion;
+    private bool introSequenceRunning;
+    private bool isAudioCardInRange;
 
     public event Action<MiniGame2EvaluationResult> MiniGameCompleted;
     public event Action<MiniGame2Phase> PhaseChanged;
     public event Action<string> LogMessage;
+    public event Action<bool> IntroSequenceStateChanged;
+    public event Action<bool> AudioCardInteractRangeChanged;
 
     public MiniGame2Phase CurrentPhase => phase;
     public RobotStatsSO RobotStats => robotStats;
@@ -76,6 +99,8 @@ public class MiniGame2Manager : MonoBehaviour
     public float StartingEnergyBudget => startingEnergyBudget;
     public int ActualMoveCount => actualPath.Count;
     public bool IsMiniGameRunning => phase == MiniGame2Phase.Planning || phase == MiniGame2Phase.RobotMoving;
+    public bool IsIntroSequenceRunning => introSequenceRunning;
+    public bool IsAudioCardInRange => isAudioCardInRange;
     public MiniGame2EvaluationResult LastResult { get; private set; }
     public bool HasPassedLastRun
     {
@@ -111,7 +136,7 @@ public class MiniGame2Manager : MonoBehaviour
         return true;
     }
 
-    private void Start()
+    private IEnumerator Start()
     {
         if (gridManager == null) gridManager = FindFirstObjectByType<GridManager>();
         if (controlManager == null) controlManager = FindFirstObjectByType<ControlManager>();
@@ -139,6 +164,11 @@ public class MiniGame2Manager : MonoBehaviour
                 rm.SetMovementEnabled(false);
         }
 
+        if (playIntroCameraSequence && audioCardTarget != null)
+        {
+            yield return RunIntroCameraSequence();
+        }
+
         StartMiniGame();
     }
 
@@ -158,6 +188,8 @@ public class MiniGame2Manager : MonoBehaviour
 
     public void StartMiniGame()
     {
+        SetIntroSequenceRunning(false);
+
         cardReached = false;
         cardInteracted = false;
         hasLoggedInefficiency = false;
@@ -170,6 +202,7 @@ public class MiniGame2Manager : MonoBehaviour
         lastVisited = null;
         miniGameEnded = false;
         endedByEnergyDepletion = false;
+        UpdateAudioCardRangeState(false);
         LastResult = default;
 
         ResolveRouteCoords();
@@ -177,7 +210,7 @@ public class MiniGame2Manager : MonoBehaviour
         if (gridManager != null)
         {
             gridManager.BuildGrid();
-            idealPath = gridManager.FindIdealPath(startCoord, cardCoord);
+            idealPath = FindIdealPathToInteractionRange(startCoord, cardCoord);
             idealEnergy = gridManager.GetPathEnergy(idealPath);
         }
 
@@ -187,7 +220,242 @@ public class MiniGame2Manager : MonoBehaviour
             if (idealPath == null || idealPath.Count == 0)
                 Debug.LogWarning("[MG2][Scoring] Ideal path could not be generated. Evaluation will still run but efficiency scores may be 0.", this);
         }
+
+        UpdateAudioCardRangeState(startCoord);
         SetPhase(MiniGame2Phase.Planning);
+    }
+
+    private IEnumerator RunIntroCameraSequence()
+    {
+        Vector3 introStartWorld = ResolveIntroStartWorld();
+        Vector3 introEndWorld = ResolveIntroFocusWorld();
+
+        MG2CinemachineTopDownInput topDownInput = introTopDownInput != null ? introTopDownInput : FindFirstObjectByType<MG2CinemachineTopDownInput>();
+        if (topDownInput != null)
+        {
+            topDownInput.ResolveRuntimeReferencesForExternalUse();
+            Transform cameraTarget = topDownInput.CameraTarget;
+
+            if (cameraTarget != null)
+            {
+                SetIntroSequenceRunning(true);
+
+                bool didLockInput = false;
+                if (lockInputDuringIntro && controlManager != null)
+                {
+                    controlManager.SetInputLocked(true);
+                    didLockInput = true;
+                }
+
+                bool topDownWasEnabled = topDownInput.enabled;
+                if (topDownWasEnabled)
+                    topDownInput.enabled = false;
+
+                float targetY = cameraTarget.position.y;
+                Vector3 startTarget = introStartWorld;
+                startTarget.y = targetY;
+
+                Vector3 revealTarget = introEndWorld;
+                revealTarget.y = targetY;
+
+                if (!IsFiniteVector(revealTarget))
+                    revealTarget = startTarget;
+
+                if (!IsFiniteVector(startTarget))
+                    startTarget = cameraTarget.position;
+
+                if (snapToIntroStartBeforeReveal)
+                {
+                    cameraTarget.position = startTarget;
+                    yield return null;
+                }
+
+                if (introDelayBeforeMove > 0f)
+                    yield return new WaitForSeconds(introDelayBeforeMove);
+
+                yield return LerpPosition(cameraTarget, cameraTarget.position, revealTarget, introMoveDuration);
+
+                if (introHoldDuration > 0f)
+                    yield return new WaitForSeconds(introHoldDuration);
+
+                yield return LerpPosition(cameraTarget, cameraTarget.position, startTarget, introMoveDuration);
+
+                if (introDelayBeforeGameplay > 0f)
+                    yield return new WaitForSeconds(introDelayBeforeGameplay);
+
+                if (topDownWasEnabled)
+                    topDownInput.enabled = true;
+
+                if (didLockInput && controlManager != null)
+                    controlManager.SetInputLocked(false);
+
+                SetIntroSequenceRunning(false);
+                yield break;
+            }
+        }
+
+        Camera cam = Camera.main;
+        if (cam == null)
+        {
+            Camera[] cameras = FindObjectsByType<Camera>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            if (cameras != null && cameras.Length > 0)
+                cam = cameras[0];
+        }
+
+        if (cam == null)
+            yield break;
+
+        SetIntroSequenceRunning(true);
+
+        bool didLockInputFallback = false;
+        if (lockInputDuringIntro && controlManager != null)
+        {
+            controlManager.SetInputLocked(true);
+            didLockInputFallback = true;
+        }
+
+        Vector3 startPos = cam.transform.position;
+        Quaternion startRot = cam.transform.rotation;
+
+        Vector3 introStartPos = introStartCameraPose != null ? introStartCameraPose.position : startPos;
+        Quaternion introStartRot = introStartCameraPose != null ? introStartCameraPose.rotation : startRot;
+
+        Vector3 focusPos;
+        Quaternion focusRot;
+
+        if (introFocusCameraPose != null)
+        {
+            focusPos = introFocusCameraPose.position;
+            focusRot = introFocusCameraPose.rotation;
+        }
+        else
+        {
+            Vector3 offset = startPos - introStartWorld;
+            focusPos = introEndWorld + offset;
+            focusRot = Quaternion.LookRotation((introEndWorld - focusPos).normalized, Vector3.up);
+        }
+
+        if (!IsFiniteVector(introStartPos))
+            introStartPos = startPos;
+        if (!IsFiniteQuaternion(introStartRot))
+            introStartRot = startRot;
+        if (!IsFiniteVector(focusPos))
+            focusPos = startPos;
+        if (!IsFiniteQuaternion(focusRot))
+            focusRot = startRot;
+
+        if (snapToIntroStartBeforeReveal)
+        {
+            cam.transform.position = introStartPos;
+            cam.transform.rotation = introStartRot;
+            yield return null;
+        }
+
+        if (introDelayBeforeMove > 0f)
+            yield return new WaitForSeconds(introDelayBeforeMove);
+
+        yield return LerpCamera(cam.transform, cam.transform.position, cam.transform.rotation, focusPos, focusRot, introMoveDuration);
+
+        if (introHoldDuration > 0f)
+            yield return new WaitForSeconds(introHoldDuration);
+
+        yield return LerpCamera(cam.transform, cam.transform.position, cam.transform.rotation, introStartPos, introStartRot, introMoveDuration);
+
+        if (introDelayBeforeGameplay > 0f)
+            yield return new WaitForSeconds(introDelayBeforeGameplay);
+
+        if (didLockInputFallback && controlManager != null)
+            controlManager.SetInputLocked(false);
+
+        SetIntroSequenceRunning(false);
+    }
+
+    private Vector3 ResolveIntroStartWorld()
+    {
+        if (introStartMarker != null)
+            return introStartMarker.position;
+
+        if (startPoint != null)
+            return startPoint.position;
+
+        if (tileClickMover == null)
+            tileClickMover = FindFirstObjectByType<TileClickMover>();
+
+        if (tileClickMover != null && tileClickMover.MoverRoot != null)
+            return tileClickMover.MoverRoot.position;
+
+        if (robot != null)
+            return robot.position;
+
+        return Vector3.zero;
+    }
+
+    private Vector3 ResolveIntroFocusWorld()
+    {
+        if (introFocusMarker != null)
+            return introFocusMarker.position;
+
+        if (audioCardTarget != null)
+            return audioCardTarget.position;
+
+        return ResolveIntroStartWorld();
+    }
+
+    private void SetIntroSequenceRunning(bool running)
+    {
+        if (introSequenceRunning == running)
+            return;
+
+        introSequenceRunning = running;
+        IntroSequenceStateChanged?.Invoke(running);
+    }
+
+    private static IEnumerator LerpCamera(Transform cameraTransform, Vector3 fromPos, Quaternion fromRot, Vector3 toPos, Quaternion toRot, float duration)
+    {
+        if (cameraTransform == null)
+            yield break;
+
+        float d = Mathf.Max(0.01f, duration);
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime / d;
+            float eased = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
+            cameraTransform.position = Vector3.Lerp(fromPos, toPos, eased);
+            cameraTransform.rotation = Quaternion.Slerp(fromRot, toRot, eased);
+            yield return null;
+        }
+
+        cameraTransform.position = toPos;
+        cameraTransform.rotation = toRot;
+    }
+
+    private static IEnumerator LerpPosition(Transform targetTransform, Vector3 fromPos, Vector3 toPos, float duration)
+    {
+        if (targetTransform == null)
+            yield break;
+
+        float d = Mathf.Max(0.01f, duration);
+        float t = 0f;
+        while (t < 1f)
+        {
+            t += Time.deltaTime / d;
+            float eased = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
+            targetTransform.position = Vector3.Lerp(fromPos, toPos, eased);
+            yield return null;
+        }
+
+        targetTransform.position = toPos;
+    }
+
+    private static bool IsFiniteVector(Vector3 v)
+    {
+        return !(float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z) || float.IsInfinity(v.x) || float.IsInfinity(v.y) || float.IsInfinity(v.z));
+    }
+
+    private static bool IsFiniteQuaternion(Quaternion q)
+    {
+        return !(float.IsNaN(q.x) || float.IsNaN(q.y) || float.IsNaN(q.z) || float.IsNaN(q.w) || float.IsInfinity(q.x) || float.IsInfinity(q.y) || float.IsInfinity(q.z) || float.IsInfinity(q.w));
     }
 
     private void ResolveRouteCoords()
@@ -204,6 +472,51 @@ public class MiniGame2Manager : MonoBehaviour
 
         if (audioCardTarget != null)
             cardCoord = gridManager.WorldToGrid(audioCardTarget.position);
+    }
+
+    private List<Vector2Int> FindIdealPathToInteractionRange(Vector2Int start, Vector2Int card)
+    {
+        if (gridManager == null)
+            return null;
+
+        List<Vector2Int> bestPath = null;
+        float bestEnergy = float.PositiveInfinity;
+        int bestSteps = int.MaxValue;
+
+        int range = Mathf.Max(0, cardInteractRangeTiles);
+        for (int dx = -range; dx <= range; dx++)
+        {
+            for (int dy = -range; dy <= range; dy++)
+            {
+                int chebyshev = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
+                int manhattan = Mathf.Abs(dx) + Mathf.Abs(dy);
+                bool withinRange = allowDiagonalCardInteraction ? chebyshev <= range : manhattan <= range;
+                if (!withinRange)
+                    continue;
+
+                Vector2Int candidateGoal = new Vector2Int(card.x + dx, card.y + dy);
+                GridManager.Node goalNode = gridManager.GetNode(candidateGoal.x, candidateGoal.y);
+                if (goalNode == null || goalNode.isBlocked)
+                    continue;
+
+                List<Vector2Int> candidatePath = gridManager.FindIdealPath(start, candidateGoal);
+                if (candidatePath == null || candidatePath.Count == 0)
+                    continue;
+
+                float candidateEnergy = gridManager.GetPathEnergy(candidatePath);
+                int candidateSteps = Mathf.Max(0, candidatePath.Count - 1);
+                bool better = candidateEnergy < bestEnergy ||
+                              (Mathf.Approximately(candidateEnergy, bestEnergy) && candidateSteps < bestSteps);
+                if (!better)
+                    continue;
+
+                bestEnergy = candidateEnergy;
+                bestSteps = candidateSteps;
+                bestPath = candidatePath;
+            }
+        }
+
+        return bestPath;
     }
 
     private void SetPhase(MiniGame2Phase next)
@@ -254,7 +567,9 @@ public class MiniGame2Manager : MonoBehaviour
             LogMessage?.Invoke("Energy saving surface detected");
         }
 
-        if (!cardReached && IsWithinCardInteractRange(coord))
+        UpdateAudioCardRangeState(coord);
+
+        if (!cardReached && isAudioCardInRange)
         {
             cardReached = true;
             Log("[MG2] Audio card in interaction range");
@@ -284,7 +599,9 @@ public class MiniGame2Manager : MonoBehaviour
         if (cardInteracted)
             return false;
 
-        if (!IsWithinCardInteractRange(robotCoord))
+        UpdateAudioCardRangeState(robotCoord);
+
+        if (!isAudioCardInRange)
         {
             LogMessage?.Invoke("Move closer to the audio card to interact");
             return false;
@@ -313,6 +630,7 @@ public class MiniGame2Manager : MonoBehaviour
     {
         if (miniGameEnded) return;
         miniGameEnded = true;
+        UpdateAudioCardRangeState(false);
 
         SetPhase(MiniGame2Phase.Completed);
 
@@ -322,12 +640,17 @@ public class MiniGame2Manager : MonoBehaviour
             float failCap = learningProfile != null ? learningProfile.passScore - 0.01f : 49.99f;
             result.tier = MiniGameTier.Fail;
             result.finalScore = Mathf.Clamp(Mathf.Min(result.finalScore, failCap), 0f, 100f);
+            result.isSuccess = false;
+            result.failedByEnergyDepletion = true;
         }
         else
         {
             float pass = Mathf.Max(50f, learningProfile != null ? learningProfile.passScore : 50f);
             if (result.finalScore < pass)
                 result.tier = MiniGameTier.Fail;
+
+            result.isSuccess = result.tier != MiniGameTier.Fail;
+            result.failedByEnergyDepletion = false;
         }
 
         LastResult = result;
@@ -339,6 +662,20 @@ public class MiniGame2Manager : MonoBehaviour
         LogEvaluationBreakdown(result, "Final Evaluation");
 
         MiniGameCompleted?.Invoke(result);
+    }
+
+    private void UpdateAudioCardRangeState(Vector2Int robotCoord)
+    {
+        UpdateAudioCardRangeState(IsWithinCardInteractRange(robotCoord));
+    }
+
+    private void UpdateAudioCardRangeState(bool inRange)
+    {
+        if (isAudioCardInRange == inRange)
+            return;
+
+        isAudioCardInRange = inRange;
+        AudioCardInteractRangeChanged?.Invoke(inRange);
     }
 
     private void ApplyAndLogRobotStatUpdate(MiniGame2EvaluationResult result)
@@ -428,11 +765,11 @@ public class MiniGame2Manager : MonoBehaviour
 
         float energyScore = learningProfile != null
             ? learningProfile.ComputeEnergyEfficiencyScore(idealEnergy, totalActualEnergy)
-            : (idealEnergy > 0f && totalActualEnergy > 0f ? Mathf.Clamp((idealEnergy / totalActualEnergy) * 100f, 0f, 100f) : 0f);
+            : ComputeBalancedRatioScore(idealEnergy, totalActualEnergy);
 
         float pathScore = learningProfile != null
             ? learningProfile.ComputePathEfficiencyScore(idealSteps, actualSteps)
-            : (idealSteps > 0 && actualSteps > 0 ? Mathf.Clamp(((float)idealSteps / actualSteps) * 100f, 0f, 100f) : 0f);
+            : ComputeBalancedRatioScore(idealSteps, actualSteps);
 
         float final = learningProfile != null
             ? learningProfile.ComputeFinalScore(energyScore, pathScore)
@@ -451,5 +788,15 @@ public class MiniGame2Manager : MonoBehaviour
             actualStepCount = actualSteps,
             idealStepCount = idealSteps
         };
+    }
+
+    private static float ComputeBalancedRatioScore(float a, float b)
+    {
+        if (a <= 0f || b <= 0f)
+            return 0f;
+
+        float low = Mathf.Min(a, b);
+        float high = Mathf.Max(a, b);
+        return Mathf.Clamp((low / high) * 100f, 0f, 100f);
     }
 }

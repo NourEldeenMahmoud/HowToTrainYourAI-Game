@@ -242,6 +242,14 @@ public class ControlManager : MonoBehaviour
         isSwitchEnabled = enabled;
     }
 
+    public void ForcePlayerControlState()
+    {
+        if (isInputLocked)
+            SetInputLocked(false);
+
+        SetControlState(true);
+    }
+
     private void SyncGameplayInputLookAndCursor()
     {
         bool fullLock = isInputLocked;

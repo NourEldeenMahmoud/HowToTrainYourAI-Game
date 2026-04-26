@@ -51,6 +51,9 @@ public class SlideUI : MonoBehaviour
     {
         InitializeIfNeeded();
 
+        if (uiText == null && uiTMPText == null)
+            return;
+
         if (revealRoutine != null)
             StopCoroutine(revealRoutine);
 
@@ -59,11 +62,15 @@ public class SlideUI : MonoBehaviour
 
     private IEnumerator RevealText()
     {
+        if (fullText == null)
+            fullText = string.Empty;
+
         // Clear before starting
         if (uiText != null) uiText.text = "";
         else if (uiTMPText != null) uiTMPText.text = "";
 
-        float delay = 1f / charsPerSecond; // time between each letter
+        float cps = Mathf.Max(0.01f, charsPerSecond);
+        float delay = 1f / cps; // time between each letter
 
         for (int i = 0; i <= fullText.Length; i++)
         {
@@ -85,12 +92,20 @@ public class SlideUI : MonoBehaviour
         if (uiText == null) uiText = GetComponent<Text>();
         if (uiTMPText == null) uiTMPText = GetComponent<TMP_Text>();
 
+        if (uiText == null)
+            uiText = GetComponentInChildren<Text>(true);
+        if (uiTMPText == null)
+            uiTMPText = GetComponentInChildren<TMP_Text>(true);
+
         if (uiText != null)
             fullText = uiText.text;
         else if (uiTMPText != null)
             fullText = uiTMPText.text;
         else
+        {
+            fullText = string.Empty;
             Debug.LogError("No Text or TMP_Text component found on " + gameObject.name);
+        }
 
         initialized = true;
     }

@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5dafc523b78bc53429c13383d67747b3, type: 3}
+  m_Name: OfficeDialogue
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
+  steps:
+  - characterName: Manager
+    dialogueText: "Kareem\u2026 I\u2019ll be direct.\n\nWe\u2019re replacing your
+      role with AI."
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 0
+    targetSceneIndex: 0
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Manager
+    dialogueText: 'Today is your last day.
+
+
+      HR will handle the rest.'
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 0
+    targetSceneIndex: 0
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Kareem
+    dialogueText: "\u2026Wait, what?\n\nYou\u2019re serious?"
+    cameraID: 1
+    characterID: 1
+    loadNewScene: 0
+    targetSceneIndex: 1
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Kareem
+    dialogueText: "After everything I\u2019ve done here\u2026\nthis is how it ends?"
+    cameraID: 1
+    characterID: 1
+    loadNewScene: 0
+    targetSceneIndex: 1
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Manger
+    dialogueText: "It\u2019s not personal.\n\nIt\u2019s just the direction the company
+      is going."
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 0
+    targetSceneIndex: 0
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Kareem
+    dialogueText: "\u2026Yeah.\n\nI figured."
+    cameraID: 1
+    characterID: 1
+    loadNewScene: 1
+    targetSceneIndex: 1
+    targetSceneName: Message Dialogue Scene
+    skipMainMenuOnLoad: 0

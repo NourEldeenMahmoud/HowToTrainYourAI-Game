@@ -39,6 +39,9 @@ public class MG2CinemachineTopDownInput : MonoBehaviour
     private Vector3 panOffsetXZ;
     private bool isPanning;
 
+    public Transform CameraTarget => cameraTarget;
+    public Transform RobotTransform => robotTransform;
+
     private void Awake()
     {
         if (cmCamera == null)
@@ -67,6 +70,12 @@ public class MG2CinemachineTopDownInput : MonoBehaviour
     {
         if (cmCamera == null)
             cmCamera = FindFirstObjectByType<CinemachineCamera>();
+    }
+
+    public void ResolveRuntimeReferencesForExternalUse()
+    {
+        ResolveRefs();
+        ResolveRobot();
     }
 
     private void ResolveRobot()

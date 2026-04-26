@@ -37,6 +37,10 @@ public class TileClickMover : MonoBehaviour
     [Tooltip("If true, diagonal adjacent moves are allowed.")]
     [SerializeField] private bool allowDiagonalAdjacent = true;
 
+    [Header("Surface Validation")]
+    [SerializeField, Min(0.5f)] private float surfaceCheckRayHeight = 6f;
+    [SerializeField, Min(0.5f)] private float surfaceCheckRayDistance = 20f;
+
     [Header("Step Recording (No Rigidbody needed)")]
     [Tooltip("If enabled, each reached step is recorded directly on MiniGame2Manager (energy/path/win) without requiring floor trigger colliders.")]
     [SerializeField] private bool recordStepsDirectly = true;
@@ -207,6 +211,9 @@ public class TileClickMover : MonoBehaviour
         if (miniGame2Manager == null)
             return;
 
+        if (!miniGame2Manager.IsMiniGameRunning)
+            return;
+
         miniGame2Manager.TryInteractWithAudioCard(currentGridPos);
     }
 
@@ -255,6 +262,9 @@ public class TileClickMover : MonoBehaviour
 
     private void ProcessClick(Vector2 screenPos, string source)
     {
+        if (miniGame2Manager != null && !miniGame2Manager.IsMiniGameRunning)
+            return;
+
         if (lastProcessedClickFrame == Time.frameCount)
             return;
 
@@ -340,8 +350,12 @@ public class TileClickMover : MonoBehaviour
         {
             if (TryProjectClickToMovementPlane(screenPos, out Vector3 projectedPoint))
             {
-                destination = InferAdjacentFromClick(projectedPoint, currentGridPos);
-                return true;
+                Vector2Int inferred = InferAdjacentFromClick(projectedPoint, currentGridPos);
+                if (HasWalkableSurfaceAtGrid(inferred))
+                {
+                    destination = inferred;
+                    return true;
+                }
             }
         }
 
@@ -440,6 +454,13 @@ public class TileClickMover : MonoBehaviour
             return false;
         }
 
+        if (!HasWalkableSurfaceAtGrid(destination))
+        {
+            if (verboseMovementLogs)
+                miniGame2Manager?.LogPathEvent($"[MG2] Validate failed: destination has no floor surface ({destination.x},{destination.y})");
+            return false;
+        }
+
         if (destination == currentGridPos)
         {
             if (verboseMovementLogs)
@@ -529,6 +550,35 @@ public class TileClickMover : MonoBehaviour
                 hit = h;
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    private bool HasWalkableSurfaceAtGrid(Vector2Int coord)
+    {
+        if (gridManager == null)
+            return false;
+
+        Vector3 center = gridManager.GridToWorld(coord.x, coord.y);
+        Vector3 rayOrigin = center + Vector3.up * surfaceCheckRayHeight;
+        float rayDistance = Mathf.Max(surfaceCheckRayDistance, surfaceCheckRayHeight * 2f);
+
+        RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.down, rayDistance, ~0, QueryTriggerInteraction.Collide);
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        for (int i = 0; i < hits.Length; i++)
+        {
+            Collider col = hits[i].collider;
+            if (col == null)
+                continue;
+
+            bool isFloorLayer = floorLayer.value != 0 && ((floorLayer.value & (1 << col.gameObject.layer)) != 0);
+            bool hasFloorTile = col.GetComponentInParent<FloorTile>() != null;
+            if (isFloorLayer || hasFloorTile)
+                return true;
         }
 
         return false;

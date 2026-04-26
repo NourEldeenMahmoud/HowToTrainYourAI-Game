@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5dafc523b78bc53429c13383d67747b3, type: 3}
+  m_Name: MessageDialogue
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueSequence
+  steps:
+  - characterName: Kareem
+    dialogueText: "\u2026What is this?\n\nI don\u2019t remember ordering anything."
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 0
+    targetSceneIndex: 0
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Kareem
+    dialogueText: "An old letter\u2026?\r\n\r\nFrom my dead grandfather?"
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 0
+    targetSceneIndex: 0
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Kareem
+    dialogueText: "\u201CKareem, if you\u2019re reading this\u2026\nit means you
+      finally found your way here.\u201D"
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 0
+    targetSceneIndex: 0
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Kareem (reading)
+    dialogueText: "\u201CI\u2019ve left something for you inside this house.\nSomething
+      important.\u201D"
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 0
+    targetSceneIndex: 0
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Kareem
+    dialogueText: "\u201CI\u2019ve left something for you inside this house.\nSomething
+      important.\u201D"
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 0
+    targetSceneIndex: 0
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Kareem
+    dialogueText: "\u2026Inside the house?"
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 0
+    targetSceneIndex: 0
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Kareem (reading)
+    dialogueText: "\u201CFollow the instructions carefully. And don\u2019t be afraid
+      to try.\u201D"
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 0
+    targetSceneIndex: 0
+    targetSceneName: 
+    skipMainMenuOnLoad: 0
+  - characterName: Kareem
+    dialogueText: "\u2026Okay.  Let\u2019s see what you left me."
+    cameraID: 0
+    characterID: 0
+    loadNewScene: 1
+    targetSceneIndex: 0
+    targetSceneName: Nour
+    skipMainMenuOnLoad: 1

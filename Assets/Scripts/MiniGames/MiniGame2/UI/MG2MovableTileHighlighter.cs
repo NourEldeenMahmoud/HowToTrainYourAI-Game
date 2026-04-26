@@ -122,7 +122,10 @@ public class MG2MovableTileHighlighter : MonoBehaviour
             tileClickMover.StepCompleted += OnStepCompleted;
 
         if (miniGame2Manager != null)
+        {
             miniGame2Manager.PhaseChanged += OnPhaseChanged;
+            miniGame2Manager.IntroSequenceStateChanged += OnIntroSequenceStateChanged;
+        }
     }
 
     private void Unsubscribe()
@@ -131,7 +134,10 @@ public class MG2MovableTileHighlighter : MonoBehaviour
             tileClickMover.StepCompleted -= OnStepCompleted;
 
         if (miniGame2Manager != null)
+        {
             miniGame2Manager.PhaseChanged -= OnPhaseChanged;
+            miniGame2Manager.IntroSequenceStateChanged -= OnIntroSequenceStateChanged;
+        }
     }
 
     private void OnStepCompleted(Vector2Int _, float __)
@@ -140,6 +146,11 @@ public class MG2MovableTileHighlighter : MonoBehaviour
     }
 
     private void OnPhaseChanged(MiniGame2Phase _)
+    {
+        RefreshHighlights();
+    }
+
+    private void OnIntroSequenceStateChanged(bool _)
     {
         RefreshHighlights();
     }
@@ -261,9 +272,9 @@ public class MG2MovableTileHighlighter : MonoBehaviour
             return false;
 
         if (miniGame2Manager == null)
-            return true;
+            return false;
 
-        return miniGame2Manager.CurrentPhase != MiniGame2Phase.Completed;
+        return miniGame2Manager.IsMiniGameRunning && !miniGame2Manager.IsIntroSequenceRunning;
     }
 
     private void EnsureMarkerRoot()

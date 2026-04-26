@@ -214,7 +214,6 @@ GameObject:
   - component: {fileID: 1514276509432886019}
   - component: {fileID: 1330498634790882190}
   - component: {fileID: 1117298536540251329}
-  - component: {fileID: 5716085716698741235}
   m_Layer: 0
   m_Name: GardenGround (1)
   m_TagString: Untagged
@@ -315,56 +314,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &5716085716698741235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1443781857338285587}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb257b300d8d9d748bf8d0eeb8190b52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: MicahW.PointGrassRenderer.Runtime::MicahW.PointGrass.PointGrassRenderer
-  distSource: 1
-  baseMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-  terrain: {fileID: 0}
-  terrainLayers: []
-  chunkCount: {x: 8, y: 8}
-  sceneFilters: []
-  bladeType: 1
-  multipleMeshes: 0
-  grassBladeMesh: {fileID: 0}
-  grassBladeMeshes:
-  - {fileID: 0}
-  meshDensityValues:
-  - 1
-  multipleMaterials: 0
-  material: {fileID: 2100000, guid: f7bc96225726e0641a6653092cea035f, type: 2}
-  materials:
-  - {fileID: 0}
-  shadowMode: 1
-  renderLayer:
-    m_LayerIndex: 0
-  pointCount: 20000
-  multiplyByArea: 0
-  pointLODFactor: 1
-  randomiseSeed: 1
-  seed: 0
-  overwriteNormalDirection: 1
-  forcedNormal: {x: 0, y: 1, z: 0}
-  useDensity: 1
-  densityCutoff: 0.5
-  useLength: 1
-  lengthMapping: {x: 0, y: 1}
-  projectType: 0
-  projectMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  boundingBoxOffset:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0.5, y: 0.5, z: 0.5}
 --- !u!1 &1741531859097910544
 GameObject:
   m_ObjectHideFlags: 0
@@ -695,7 +644,6 @@ GameObject:
   - component: {fileID: 2804841149609128163}
   - component: {fileID: 2461360563054400715}
   - component: {fileID: 7588073190642461503}
-  - component: {fileID: 3947298987053644874}
   m_Layer: 0
   m_Name: GardenGround
   m_TagString: Untagged
@@ -796,56 +744,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &3947298987053644874
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6219268754108325594}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb257b300d8d9d748bf8d0eeb8190b52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: MicahW.PointGrassRenderer.Runtime::MicahW.PointGrass.PointGrassRenderer
-  distSource: 1
-  baseMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-  terrain: {fileID: 0}
-  terrainLayers: []
-  chunkCount: {x: 8, y: 8}
-  sceneFilters: []
-  bladeType: 1
-  multipleMeshes: 0
-  grassBladeMesh: {fileID: 0}
-  grassBladeMeshes:
-  - {fileID: 0}
-  meshDensityValues:
-  - 1
-  multipleMaterials: 0
-  material: {fileID: 2100000, guid: f7bc96225726e0641a6653092cea035f, type: 2}
-  materials:
-  - {fileID: 0}
-  shadowMode: 1
-  renderLayer:
-    m_LayerIndex: 0
-  pointCount: 20000
-  multiplyByArea: 0
-  pointLODFactor: 1
-  randomiseSeed: 1
-  seed: 0
-  overwriteNormalDirection: 1
-  forcedNormal: {x: 0, y: 1, z: 0}
-  useDensity: 1
-  densityCutoff: 0.5
-  useLength: 1
-  lengthMapping: {x: 0, y: 1}
-  projectType: 0
-  projectMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  boundingBoxOffset:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 0.5, y: 0.5, z: 0.5}
 --- !u!1 &6395448128892095299
 GameObject:
   m_ObjectHideFlags: 0

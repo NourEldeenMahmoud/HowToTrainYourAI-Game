@@ -57,13 +57,19 @@ public class MiniGame2LearningProfileSO : ScriptableObject
     public float ComputeEnergyEfficiencyScore(float idealEnergy, float actualEnergy)
     {
         if (idealEnergy <= 0f || actualEnergy <= 0f) return 0f;
-        return Mathf.Clamp((idealEnergy / actualEnergy) * 100f, 0f, 100f);
+
+        float lower = Mathf.Min(idealEnergy, actualEnergy);
+        float higher = Mathf.Max(idealEnergy, actualEnergy);
+        return Mathf.Clamp((lower / higher) * 100f, 0f, 100f);
     }
 
     public float ComputePathEfficiencyScore(int idealSteps, int actualSteps)
     {
         if (idealSteps <= 0 || actualSteps <= 0) return 0f;
-        return Mathf.Clamp(((float)idealSteps / actualSteps) * 100f, 0f, 100f);
+
+        int lower = Mathf.Min(idealSteps, actualSteps);
+        int higher = Mathf.Max(idealSteps, actualSteps);
+        return Mathf.Clamp(((float)lower / higher) * 100f, 0f, 100f);
     }
 
     public float ComputeFinalScore(float energyScore0To100, float pathScore0To100)

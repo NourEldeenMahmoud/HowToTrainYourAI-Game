@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -28,6 +29,9 @@ public class CustomNav : MonoBehaviour
     [SerializeField] private GraphicRaycaster menuRaycaster;
     [SerializeField] private GameObject mainMenuBackground;
     [SerializeField] private bool showBackgroundOnlyOnInitialMenu = true;
+    [SerializeField] private bool playStartsDialogueSequence = true;
+    [SerializeField] private string firstDialogueSceneName = "Office Dialogue Scene";
+    [SerializeField, Min(0.05f)] private float sceneTransitionFadeDuration = 0.35f;
 
     private const string MasterVolumeKey = "MasterVolume";
     private bool menuIsOpen;
@@ -94,8 +98,12 @@ public class CustomNav : MonoBehaviour
 
         if (configureAsStartMenu)
         {
-            hasLeftInitialMenu = !openOnStart;
-            SetMenuVisible(openOnStart);
+            bool skipMainMenuOnce = GameSessionFlowFlags.ConsumeSkipMainMenuOnce();
+            hasLeftInitialMenu = skipMainMenuOnce || !openOnStart;
+            SetMenuVisible(skipMainMenuOnce ? false : openOnStart);
+
+            if (skipMainMenuOnce)
+                StartCoroutine(EnforceGameplayUiAfterDialogueReturn());
         }
 
     }
@@ -266,6 +274,18 @@ public class CustomNav : MonoBehaviour
 
     private void OnPlayClicked()
     {
+        bool shouldStartIntroDialogue = !hasLeftInitialMenu;
+        if (shouldStartIntroDialogue && playStartsDialogueSequence && !string.IsNullOrWhiteSpace(firstDialogueSceneName))
+        {
+            hasLeftInitialMenu = true;
+            SetSettingsOpen(false);
+            SetMenuInputState(true);
+
+            GameSessionFlowFlags.RequestSkipMainMenuOnce();
+            SceneTransitionFader.TransitionToScene(firstDialogueSceneName, -1, sceneTransitionFadeDuration);
+            return;
+        }
+
         hasLeftInitialMenu = true;
         menuInputForced = false;
         SetSettingsOpen(false);
@@ -357,6 +377,31 @@ public class CustomNav : MonoBehaviour
 
         Cursor.lockState = menuVisible ? CursorLockMode.None : CursorLockMode.Locked;
         Cursor.visible = menuVisible;
+    }
+
+    private IEnumerator EnforceGameplayUiAfterDialogueReturn()
+    {
+        yield return null;
+
+        if (controlManager == null)
+            controlManager = FindFirstObjectByType<ControlManager>();
+
+        controlManager?.ForcePlayerControlState();
+
+        HideByNameIfFound("Robot POV Canvas");
+        HideByNameIfFound("Game 2 Robot POV Canvas");
+        HideByNameIfFound("Robot Interaction");
+        HideByNameIfFound("Robot Interaction Canvas");
+    }
+
+    private static void HideByNameIfFound(string exactName)
+    {
+        if (string.IsNullOrWhiteSpace(exactName))
+            return;
+
+        GameObject go = GameObject.Find(exactName);
+        if (go != null && go.activeSelf)
+            go.SetActive(false);
     }
 
     private static Button FindButtonWithLabel(Transform root, string label)

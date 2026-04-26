@@ -27,6 +27,10 @@ public class MiniGame2RobotPovUI : MonoBehaviour
     [Header("UI Bars")]
     [SerializeField] private Image energyFillImage;
 
+    [Header("Interaction UI")]
+    [SerializeField] private GameObject robotInteractionCanvas;
+    [SerializeField] private bool autoFindInteractionCanvas = true;
+
     [Header("MG2 Text")]
     [SerializeField] private string instructionMessage = "Find the audio card in order to read the message properly.";
     [SerializeField] private string readyStatusText = "READY";
@@ -40,6 +44,7 @@ public class MiniGame2RobotPovUI : MonoBehaviour
     [SerializeField] private string editorPrefabPath = "Assets/prefabs/UI Prefabs/MG2 Robot pov Prefabs/Game 2 Robot POV Canvas.prefab";
     [SerializeField] private string runtimeCanvasName = "Game 2 Robot POV Canvas";
     [SerializeField] private bool showOnSceneStart = true;
+    [SerializeField] private bool showOnlyWhenMiniGameIsRunning = true;
     [SerializeField] private bool hideOnMiniGameCompleted = true;
     [SerializeField, Min(1)] private int maxLogLines = 6;
     [SerializeField, Min(5)] private int maxCharsPerLine = 28;
@@ -68,6 +73,20 @@ public class MiniGame2RobotPovUI : MonoBehaviour
         go.AddComponent<MiniGame2RobotPovUI>();
     }
 
+    private void Awake()
+    {
+        ResolvePovRoot();
+
+        if (autoFindInteractionCanvas)
+            AutoFindInteractionCanvas();
+
+        if (povUiRoot != null && showOnlyWhenMiniGameIsRunning && povUiRoot.gameObject.activeSelf)
+            povUiRoot.gameObject.SetActive(false);
+
+        if (robotInteractionCanvas != null && robotInteractionCanvas.activeSelf)
+            robotInteractionCanvas.SetActive(false);
+    }
+
     private void OnEnable()
     {
         ResolvePovRoot();
@@ -76,6 +95,9 @@ public class MiniGame2RobotPovUI : MonoBehaviour
         {
             AutoFindUI();
         }
+
+        if (autoFindInteractionCanvas)
+            AutoFindInteractionCanvas();
 
         if (miniGame2Manager == null)
         {
@@ -93,14 +115,16 @@ public class MiniGame2RobotPovUI : MonoBehaviour
             miniGame2Manager.PhaseChanged += OnPhaseChanged;
             miniGame2Manager.LogMessage += AppendLog;
             miniGame2Manager.MiniGameCompleted += OnMiniGameCompleted;
+            miniGame2Manager.IntroSequenceStateChanged += OnIntroSequenceStateChanged;
+            miniGame2Manager.AudioCardInteractRangeChanged += OnAudioCardInteractRangeChanged;
             OnPhaseChanged(miniGame2Manager.CurrentPhase);
 
             bool disableTab = miniGame2Manager.CurrentPhase == MiniGame2Phase.Planning || miniGame2Manager.CurrentPhase == MiniGame2Phase.RobotMoving;
             SetTabButtonVisualEnabled(!disableTab);
         }
 
-        if (showOnSceneStart && povUiRoot != null)
-            povUiRoot.gameObject.SetActive(true);
+        RefreshRootVisibility();
+        RefreshInteractionCanvasVisibility();
 
         ApplyStaticText();
         RefreshDynamicUI();
@@ -115,6 +139,8 @@ public class MiniGame2RobotPovUI : MonoBehaviour
             miniGame2Manager.PhaseChanged -= OnPhaseChanged;
             miniGame2Manager.LogMessage -= AppendLog;
             miniGame2Manager.MiniGameCompleted -= OnMiniGameCompleted;
+            miniGame2Manager.IntroSequenceStateChanged -= OnIntroSequenceStateChanged;
+            miniGame2Manager.AudioCardInteractRangeChanged -= OnAudioCardInteractRangeChanged;
         }
     }
 
@@ -159,16 +185,75 @@ public class MiniGame2RobotPovUI : MonoBehaviour
 
         bool disableTab = phase == MiniGame2Phase.Planning || phase == MiniGame2Phase.RobotMoving;
         SetTabButtonVisualEnabled(!disableTab);
+        RefreshRootVisibility();
         RefreshDynamicUI();
+    }
+
+    private void OnIntroSequenceStateChanged(bool isRunning)
+    {
+        RefreshRootVisibility();
+        RefreshInteractionCanvasVisibility();
+    }
+
+    private void OnAudioCardInteractRangeChanged(bool inRange)
+    {
+        RefreshInteractionCanvasVisibility();
     }
 
     private void OnMiniGameCompleted(MiniGame2EvaluationResult result)
     {
         hasCompleted = true;
+        RefreshRootVisibility();
+        RefreshInteractionCanvasVisibility();
         RefreshDynamicUI();
 
         if (hideOnMiniGameCompleted && povUiRoot != null)
             povUiRoot.gameObject.SetActive(false);
+    }
+
+    private void RefreshRootVisibility()
+    {
+        if (povUiRoot == null)
+            return;
+
+        if (hideOnMiniGameCompleted && hasCompleted)
+        {
+            if (povUiRoot.gameObject.activeSelf)
+                povUiRoot.gameObject.SetActive(false);
+            return;
+        }
+
+        bool shouldShow = showOnSceneStart;
+        if (showOnlyWhenMiniGameIsRunning)
+        {
+            shouldShow = miniGame2Manager != null && miniGame2Manager.IsMiniGameRunning && !miniGame2Manager.IsIntroSequenceRunning;
+        }
+
+        if (povUiRoot.gameObject.activeSelf != shouldShow)
+            povUiRoot.gameObject.SetActive(shouldShow);
+
+        RefreshInteractionCanvasVisibility();
+    }
+
+    private void RefreshInteractionCanvasVisibility()
+    {
+        if (robotInteractionCanvas == null)
+            return;
+
+        bool shouldShow = false;
+        if (miniGame2Manager != null)
+        {
+            shouldShow =
+                miniGame2Manager.IsMiniGameRunning &&
+                !miniGame2Manager.IsIntroSequenceRunning &&
+                miniGame2Manager.IsAudioCardInRange;
+        }
+
+        if (hideOnMiniGameCompleted && hasCompleted)
+            shouldShow = false;
+
+        if (robotInteractionCanvas.activeSelf != shouldShow)
+            robotInteractionCanvas.SetActive(shouldShow);
     }
 
     private void SetChallengeName(string name)
@@ -216,6 +301,40 @@ public class MiniGame2RobotPovUI : MonoBehaviour
         ResolvePovRoot();
         Transform root = povUiRoot != null ? povUiRoot : transform;
         SearchHierarchyForUI(root);
+    }
+
+    private void AutoFindInteractionCanvas()
+    {
+        if (robotInteractionCanvas != null)
+            return;
+
+        Transform root = povUiRoot != null ? povUiRoot : transform;
+        if (root == null)
+            return;
+
+        Transform interaction = FindChildByName(root, "Robot Interaction");
+        if (interaction == null)
+            interaction = FindChildByName(root, "Robot Interaction Canvas");
+
+        if (interaction == null && root.parent != null)
+        {
+            interaction = FindChildByName(root.parent, "Robot Interaction");
+            if (interaction == null)
+                interaction = FindChildByName(root.parent, "Robot Interaction Canvas");
+        }
+
+        if (interaction == null)
+        {
+            GameObject byName = FindGameObjectByNameIncludingInactive("Robot Interaction");
+            if (byName == null)
+                byName = FindGameObjectByNameIncludingInactive("Robot Interaction Canvas");
+
+            if (byName != null)
+                interaction = byName.transform;
+        }
+
+        if (interaction != null)
+            robotInteractionCanvas = interaction.gameObject;
     }
 
     private bool AnyUIFieldMissing()

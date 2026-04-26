@@ -9,6 +9,12 @@ EditorBuildSettings:
     path: Assets/Scenes/How to train your ai/Main Scene.unity
     guid: 610a262a19a54be44ad0c0b0ce7bbf81
   - enabled: 1
+    path: Assets/Scenes/Dialogue/Office Dialogue Scene.unity
+    guid: a1498d3453f863743a19c0e46b7baeb1
+  - enabled: 1
+    path: Assets/Scenes/Dialogue/Message Dialogue Scene.unity
+    guid: e20f5b40df8378a438d42aa15d8875d1
+  - enabled: 1
     path: Assets/Scenes/Nour/Nour.unity
     guid: bfe8323afd505f4458892eb912a76a87
   - enabled: 1
