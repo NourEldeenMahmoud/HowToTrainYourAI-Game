@@ -77,6 +77,7 @@ public class TileClickMover : MonoBehaviour
     private int sprintingBoolHash;
     private bool hasWalkingBool;
     private bool hasSprintingBool;
+    private bool allowMovementWhenMiniGameCompleted;
     /// <summary>Transform actually moved (CC transform if found on self/children).</summary>
     private Transform moveRoot;
 
@@ -90,6 +91,8 @@ public class TileClickMover : MonoBehaviour
     public float TotalAppliedEnergy => totalAppliedEnergy;
     public float TotalExpectedEnergyFromGrid => totalExpectedEnergyFromGrid;
     public IReadOnlyList<Vector2Int> VisitedStepCoords => visitedStepCoords;
+    public bool AllowMovementWhenMiniGameCompleted => allowMovementWhenMiniGameCompleted;
+    public float MoveSpeed => moveSpeed;
 
     private Transform Mover => moverTransform != null ? moverTransform : transform;
     private Transform RotationTarget => rotationTransform != null ? rotationTransform : MoverRoot;
@@ -339,6 +342,60 @@ public class TileClickMover : MonoBehaviour
 
         CommitMovePlan(pathSteps);
         return true;
+    }
+
+    public bool TryQueueStepSequence(IReadOnlyList<Vector2Int> stepSequence, bool clearQueuedStepsFirst = true, bool ignoreMaxQueuedTargets = false)
+    {
+        if (stepSequence == null || stepSequence.Count == 0)
+            return false;
+
+        if (!hasCurrentGridPos)
+            InitializeRuntimeGridPosition();
+
+        if (gridManager == null || !hasCurrentGridPos)
+            return false;
+
+        Vector2Int previous = currentGridPos;
+        for (int i = 0; i < stepSequence.Count; i++)
+        {
+            Vector2Int step = stepSequence[i];
+
+            GridManager.Node node = gridManager.GetNode(step.x, step.y);
+            if (node == null || node.isBlocked)
+                return false;
+
+            if (!HasWalkableSurfaceAtGrid(step))
+                return false;
+
+            if (restrictToAdjacentTileOnly)
+            {
+                int dx = Mathf.Abs(step.x - previous.x);
+                int dy = Mathf.Abs(step.y - previous.y);
+                bool adjacent = allowDiagonalAdjacent ? (dx <= 1 && dy <= 1 && (dx + dy) > 0) : ((dx + dy) == 1);
+                if (!adjacent)
+                    return false;
+            }
+
+            previous = step;
+        }
+
+        if (clearQueuedStepsFirst)
+            stepQueue.Clear();
+
+        if (!ignoreMaxQueuedTargets && maxQueuedTargets > 0 && (stepQueue.Count + stepSequence.Count) > maxQueuedTargets)
+            return false;
+
+        for (int i = 0; i < stepSequence.Count; i++)
+        {
+            stepQueue.Enqueue(stepSequence[i]);
+        }
+
+        return true;
+    }
+
+    public void SetAllowMovementWhenMiniGameCompleted(bool allow)
+    {
+        allowMovementWhenMiniGameCompleted = allow;
     }
 
     private bool TryResolveTargetGrid(Vector2 screenPos, out Vector2Int destination)
@@ -777,6 +834,12 @@ public class TileClickMover : MonoBehaviour
 
     private bool ShouldAbortMovementExecution()
     {
-        return miniGame2Manager != null && miniGame2Manager.CurrentPhase == MiniGame2Phase.Completed;
+        if (miniGame2Manager == null)
+            return false;
+
+        if (miniGame2Manager.CurrentPhase != MiniGame2Phase.Completed)
+            return false;
+
+        return !allowMovementWhenMiniGameCompleted;
     }
 }

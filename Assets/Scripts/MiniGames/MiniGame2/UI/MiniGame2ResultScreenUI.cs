@@ -51,8 +51,15 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
     [SerializeField] private bool disableNextButton = true;
     [SerializeField] private bool debugToConsole = true;
 
+    private MiniGame2EvaluationResult lastResult;
+    private bool hasResult;
+    private bool nextSequenceStarted;
+
     private void OnEnable()
     {
+        hasResult = false;
+        nextSequenceStarted = false;
+
         ResolveCoreReferences();
 
         if (autoFindOnEnable)
@@ -179,6 +186,10 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
 
     private void OnMiniGameCompleted(MiniGame2EvaluationResult result)
     {
+        lastResult = result;
+        hasResult = true;
+        nextSequenceStarted = false;
+
         if (resultScreenRoot == null)
         {
             ResolveCoreReferences();
@@ -193,8 +204,8 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
         if (lockControlsWhileVisible && controlManager != null)
             controlManager.SetInputLocked(true);
 
-        ConfigureNextButtonState();
         ApplyResult(result);
+        ConfigureNextButtonState();
 
         if (debugToConsole)
             Debug.Log($"[MG2][ResultUI] Result shown. final={result.finalScore:F1} tier={result.tier} success={result.isSuccess} energyFail={result.failedByEnergyDepletion}", this);
@@ -213,13 +224,13 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
     private void ApplyResult(MiniGame2EvaluationResult result)
     {
         if (finalScoreText != null)
-            finalScoreText.text = $"{Mathf.RoundToInt(result.finalScore)}%";
+            finalScoreText.text = $"{FormatPercent(result.finalScore, result.isSuccess)}%";
 
         if (energyEfficiencyPercentText != null)
-            energyEfficiencyPercentText.text = $"{Mathf.RoundToInt(result.energyEfficiencyScore)}%";
+            energyEfficiencyPercentText.text = $"{FormatPercent(result.energyEfficiencyScore, result.isSuccess)}%";
 
         if (routeQualityPercentText != null)
-            routeQualityPercentText.text = $"{Mathf.RoundToInt(result.pathEfficiencyScore)}%";
+            routeQualityPercentText.text = $"{FormatPercent(result.pathEfficiencyScore, result.isSuccess)}%";
 
         if (movesTakenText != null)
             movesTakenText.text = result.actualStepCount.ToString();
@@ -250,17 +261,44 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
         ApplyBar(finalScoreBar, result.finalScore);
     }
 
+    private static int FormatPercent(float score, bool isSuccess)
+    {
+        return isSuccess
+            ? Mathf.RoundToInt(score)
+            : Mathf.FloorToInt(score);
+    }
+
     private void ConfigureNextButtonState()
     {
         if (nextButton == null)
             return;
 
-        bool enabled = !disableNextButton;
+        bool hasSuccessfulResult = ResolveSuccessfulResultState();
+        bool enabled = hasSuccessfulResult && !nextSequenceStarted;
+
+        if (!hasResult && disableNextButton)
+            enabled = false;
+
         nextButton.interactable = enabled;
 
         Navigation nav = nextButton.navigation;
         nav.mode = enabled ? Navigation.Mode.Automatic : Navigation.Mode.None;
         nextButton.navigation = nav;
+    }
+
+    private bool ResolveSuccessfulResultState()
+    {
+        if (hasResult)
+            return lastResult.isSuccess;
+
+        if (miniGame2Manager == null)
+            return false;
+
+        if (miniGame2Manager.CurrentPhase != MiniGame2Phase.Completed)
+            return false;
+
+        MiniGame2EvaluationResult managerResult = miniGame2Manager.LastResult;
+        return managerResult.isSuccess || miniGame2Manager.HasPassedLastRun;
     }
 
     private static void ApplyBar(Slider bar, float score0To100)
@@ -301,8 +339,59 @@ public class MiniGame2ResultScreenUI : MonoBehaviour
 
     private void OnNextClicked()
     {
+        if (!hasResult || !lastResult.isSuccess)
+            return;
+
+        if (nextSequenceStarted)
+            return;
+
+        nextSequenceStarted = true;
+
+        if (retryButton != null)
+            retryButton.interactable = false;
+
+        HideResultScreenForNextSequence();
+        ConfigureNextButtonState();
+
+        if (miniGame2Manager == null)
+            miniGame2Manager = FindFirstObjectByType<MiniGame2Manager>();
+
+        if (miniGame2Manager == null)
+        {
+            if (debugToConsole)
+                Debug.LogWarning("[MG2][ResultUI] Next clicked but MiniGame2Manager was not found.", this);
+
+            nextSequenceStarted = false;
+            if (retryButton != null)
+                retryButton.interactable = true;
+            ConfigureNextButtonState();
+            return;
+        }
+
         if (debugToConsole)
-            Debug.Log("[MG2][ResultUI] Next clicked. Behavior intentionally disabled for now.", this);
+            Debug.Log("[MG2][ResultUI] Next clicked. Starting return-to-gate sequence.", this);
+
+        miniGame2Manager.StartReturnToGateAndExitSequence();
+    }
+
+    private void HideResultScreenForNextSequence()
+    {
+        if (resultScreenRoot == null)
+            return;
+
+        bool rootWasSelf = resultScreenRoot == gameObject;
+        SetResultScreenVisible(false);
+
+        if (!rootWasSelf)
+            return;
+
+        Transform root = resultScreenRoot.transform;
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform child = root.GetChild(i);
+            if (child != null && child.gameObject.activeSelf)
+                child.gameObject.SetActive(false);
+        }
     }
 
     private void SetResultScreenVisible(bool visible)

@@ -45,6 +45,24 @@ public class MiniGame2Manager : MonoBehaviour
     [Tooltip("Force mouse cursor visible/unlocked while MiniGame2 is active so tile clicking remains usable.")]
     [SerializeField] private bool forceCursorVisibleForTileInput = true;
 
+    [Header("Post-Result Return And Exit")]
+    [SerializeField] private string returnToMainSceneName = "Nour";
+    [Tooltip("Optional world-space target for the MG2 post-result return demo. If null, manager falls back to the MG2 start tile.")]
+    [SerializeField] private Transform returnDemoEndPoint;
+    [SerializeField] private bool useStartTileAsReturnFallback = true;
+    [SerializeField] private string mainSceneGateAnchorName = "Warehouse_Door.B";
+    [SerializeField] private string mainSceneGateFallbackAnchorName = "Warehouse_Door.F";
+    [SerializeField] private Vector3 mainScenePlayerLocalOffset = new Vector3(-0.85f, 0f, -2.2f);
+    [SerializeField] private Vector3 mainSceneRobotLocalOffset = new Vector3(0.75f, 0f, -1.35f);
+    [SerializeField] private bool faceSpawnedActorsTowardGate = true;
+    [SerializeField, Min(0.25f)] private float returnPathTimeoutSeconds = 12f;
+    [SerializeField, Min(0.05f)] private float returnPathTimeoutSecondsPerStep = 0.75f;
+    [SerializeField, Min(1f)] private float returnPathTimeoutSafetyMultiplier = 1.5f;
+    [SerializeField, Min(0f)] private float returnDemoNearestTileMaxDistance = 2.5f;
+    [SerializeField, Min(0f)] private float holdAtGateBeforeTransitionSeconds = 0.75f;
+    [SerializeField, Min(0.05f)] private float exitFadeDurationSeconds = 1f;
+    [SerializeField] private bool enableReturnDemoLogs = true;
+
     [Header("Intro Camera Sequence")]
     [SerializeField] private bool playIntroCameraSequence = true;
     [SerializeField] private MG2CinemachineTopDownInput introTopDownInput;
@@ -82,6 +100,8 @@ public class MiniGame2Manager : MonoBehaviour
     private bool endedByEnergyDepletion;
     private bool introSequenceRunning;
     private bool isAudioCardInRange;
+    private bool returnSequenceRunning;
+    private Coroutine returnSequenceRoutine;
 
     public event Action<MiniGame2EvaluationResult> MiniGameCompleted;
     public event Action<MiniGame2Phase> PhaseChanged;
@@ -101,6 +121,7 @@ public class MiniGame2Manager : MonoBehaviour
     public bool IsMiniGameRunning => phase == MiniGame2Phase.Planning || phase == MiniGame2Phase.RobotMoving;
     public bool IsIntroSequenceRunning => introSequenceRunning;
     public bool IsAudioCardInRange => isAudioCardInRange;
+    public bool IsReturnSequenceRunning => returnSequenceRunning;
     public MiniGame2EvaluationResult LastResult { get; private set; }
     public bool HasPassedLastRun
     {
@@ -109,6 +130,24 @@ public class MiniGame2Manager : MonoBehaviour
             float pass = Mathf.Max(50f, learningProfile != null ? learningProfile.passScore : 50f);
             return LastResult.finalScore >= pass && LastResult.tier != MiniGameTier.Fail;
         }
+    }
+
+    public void StartReturnToGateAndExitSequence()
+    {
+        if (returnSequenceRunning)
+            return;
+
+        if (!LastResult.isSuccess)
+        {
+            if (enableReturnDemoLogs)
+                Debug.LogWarning("[MG2] Return-to-gate sequence rejected: last result is not a success.", this);
+            return;
+        }
+
+        if (!isActiveAndEnabled)
+            return;
+
+        returnSequenceRoutine = StartCoroutine(ReturnToGateAndExitRoutine());
     }
 
     public bool TryGetStartCoord(out Vector2Int coord)
@@ -637,9 +676,10 @@ public class MiniGame2Manager : MonoBehaviour
         MiniGame2EvaluationResult result = Evaluate();
         if (endedByEnergyDepletion)
         {
-            float failCap = learningProfile != null ? learningProfile.passScore - 0.01f : 49.99f;
             result.tier = MiniGameTier.Fail;
-            result.finalScore = Mathf.Clamp(Mathf.Min(result.finalScore, failCap), 0f, 100f);
+            result.energyEfficiencyScore = 0f;
+            result.pathEfficiencyScore = 0f;
+            result.finalScore = 0f;
             result.isSuccess = false;
             result.failedByEnergyDepletion = true;
         }
@@ -798,5 +838,224 @@ public class MiniGame2Manager : MonoBehaviour
         float low = Mathf.Min(a, b);
         float high = Mathf.Max(a, b);
         return Mathf.Clamp((low / high) * 100f, 0f, 100f);
+    }
+
+    private IEnumerator ReturnToGateAndExitRoutine()
+    {
+        returnSequenceRunning = true;
+
+        try
+        {
+            if (controlManager == null)
+                controlManager = FindFirstObjectByType<ControlManager>();
+
+            if (controlManager != null)
+                controlManager.SetInputLocked(true);
+
+            ResolveRouteCoords();
+
+            Vector2Int returnTargetCoord = ResolveReturnDemoTargetCoord();
+
+            bool hasCompletedReturn = false;
+            if (gridManager != null && tileClickMover != null)
+            {
+                Vector2Int currentCoord = tileClickMover.CurrentGridPos;
+
+                if (currentCoord == returnTargetCoord)
+                {
+                    hasCompletedReturn = true;
+                    if (enableReturnDemoLogs)
+                        Debug.Log("[MG2] Return demo skipped: robot already at configured return tile.", this);
+                }
+
+                List<Vector2Int> fullPath = gridManager.FindIdealPath(currentCoord, returnTargetCoord);
+                List<Vector2Int> stepSequence = BuildStepSequenceFromFullPath(fullPath);
+
+                if (!hasCompletedReturn && stepSequence != null && stepSequence.Count > 0)
+                {
+                    tileClickMover.SetAllowMovementWhenMiniGameCompleted(true);
+                    bool queued = tileClickMover.TryQueueStepSequence(stepSequence, true, true);
+
+                    if (queued)
+                    {
+                        if (enableReturnDemoLogs)
+                            Debug.Log($"[MG2] Return demo started. steps={stepSequence.Count} from={currentCoord} to={returnTargetCoord}", this);
+
+                        float estimatedTravelSeconds = EstimateTravelSeconds(currentCoord, stepSequence);
+                        float scaledEstimate = Mathf.Max(0f, estimatedTravelSeconds) * Mathf.Max(1f, returnPathTimeoutSafetyMultiplier);
+                        float perStepEstimate = stepSequence.Count * returnPathTimeoutSecondsPerStep;
+                        float timeoutSeconds = Mathf.Max(returnPathTimeoutSeconds, Mathf.Max(scaledEstimate, perStepEstimate));
+                        float timeoutAt = Time.unscaledTime + Mathf.Max(0.25f, timeoutSeconds);
+                        while (Time.unscaledTime < timeoutAt)
+                        {
+                            bool queueEmpty = tileClickMover.QueuedStepCount == 0;
+                            bool moverIdle = !tileClickMover.IsMoving;
+                            bool reachedTarget = tileClickMover.CurrentGridPos == returnTargetCoord;
+
+                            if (queueEmpty && moverIdle && reachedTarget)
+                            {
+                                hasCompletedReturn = true;
+                                break;
+                            }
+
+                            yield return null;
+                        }
+
+                        if (!hasCompletedReturn)
+                            hasCompletedReturn = tileClickMover.CurrentGridPos == returnTargetCoord;
+                    }
+                    else if (enableReturnDemoLogs)
+                    {
+                        Debug.LogWarning("[MG2] Return demo path queue rejected. Falling back to direct transition.", this);
+                    }
+                }
+                else if (!hasCompletedReturn)
+                {
+                    if (enableReturnDemoLogs)
+                        Debug.LogWarning($"[MG2] Return demo path missing from {currentCoord} to {returnTargetCoord}. Transition will continue.", this);
+                }
+            }
+            else if (enableReturnDemoLogs)
+            {
+                Debug.LogWarning("[MG2] Return demo skipped: missing grid/mover references. Falling back to direct transition.", this);
+            }
+
+            if (!hasCompletedReturn && enableReturnDemoLogs)
+                Debug.LogWarning($"[MG2] Return demo ended before reaching target. current={tileClickMover.CurrentGridPos} target={returnTargetCoord}. Continuing with scene transition.", this);
+
+            if (holdAtGateBeforeTransitionSeconds > 0f)
+                yield return new WaitForSecondsRealtime(holdAtGateBeforeTransitionSeconds);
+
+            GameSessionFlowFlags.RequestMiniGame2ReturnSpawn(
+                mainSceneGateAnchorName,
+                mainSceneGateFallbackAnchorName,
+                mainScenePlayerLocalOffset,
+                mainSceneRobotLocalOffset,
+                faceSpawnedActorsTowardGate);
+
+            if (string.IsNullOrWhiteSpace(returnToMainSceneName))
+            {
+                Debug.LogError("[MG2] returnToMainSceneName is empty. Cannot exit MG2.", this);
+                yield break;
+            }
+
+            SceneTransitionFader.TransitionToScene(returnToMainSceneName, -1, Mathf.Max(0.05f, exitFadeDurationSeconds));
+        }
+        finally
+        {
+            if (tileClickMover != null)
+                tileClickMover.SetAllowMovementWhenMiniGameCompleted(false);
+
+            returnSequenceRunning = false;
+            returnSequenceRoutine = null;
+        }
+    }
+
+    private static List<Vector2Int> BuildStepSequenceFromFullPath(List<Vector2Int> fullPath)
+    {
+        if (fullPath == null || fullPath.Count <= 1)
+            return null;
+
+        List<Vector2Int> steps = new List<Vector2Int>(fullPath.Count - 1);
+        for (int i = 1; i < fullPath.Count; i++)
+            steps.Add(fullPath[i]);
+
+        return steps;
+    }
+
+    private Vector2Int ResolveReturnDemoTargetCoord()
+    {
+        if (gridManager == null)
+            return startCoord;
+
+        if (returnDemoEndPoint != null)
+        {
+            FloorTile floorTile = returnDemoEndPoint.GetComponent<FloorTile>();
+            if (floorTile == null)
+                floorTile = returnDemoEndPoint.GetComponentInParent<FloorTile>();
+
+            if (floorTile != null)
+            {
+                Vector2Int floorCoord = floorTile.GridCoord;
+                if (enableReturnDemoLogs)
+                    Debug.Log($"[MG2] Return target resolved from FloorTile '{floorTile.name}' stored={floorCoord} world={gridManager.WorldToGrid(floorTile.transform.position)}", this);
+                return floorCoord;
+            }
+
+            FloorTile nearestFloorTile = FindNearestFloorTile(returnDemoEndPoint.position, returnDemoNearestTileMaxDistance);
+            if (nearestFloorTile != null)
+            {
+                Vector2Int nearestCoord = nearestFloorTile.GridCoord;
+                if (enableReturnDemoLogs)
+                    Debug.Log($"[MG2] Return target resolved from nearest FloorTile '{nearestFloorTile.name}' stored={nearestCoord} world={gridManager.WorldToGrid(nearestFloorTile.transform.position)}", this);
+                return nearestCoord;
+            }
+
+            Vector2Int worldCoord = gridManager.WorldToGrid(returnDemoEndPoint.position);
+            if (enableReturnDemoLogs)
+                Debug.Log($"[MG2] Return target resolved from Transform '{returnDemoEndPoint.name}' world={returnDemoEndPoint.position} => {worldCoord}", this);
+            return worldCoord;
+        }
+
+        if (useStartTileAsReturnFallback)
+            return startCoord;
+
+        if (tileClickMover != null)
+            return tileClickMover.CurrentGridPos;
+
+        return startCoord;
+    }
+
+    private float EstimateTravelSeconds(Vector2Int start, List<Vector2Int> stepSequence)
+    {
+        if (gridManager == null || tileClickMover == null || stepSequence == null || stepSequence.Count == 0)
+            return 0f;
+
+        float speed = Mathf.Max(0.01f, tileClickMover.MoveSpeed);
+        float sumDistance = 0f;
+        Vector2Int from = start;
+
+        for (int i = 0; i < stepSequence.Count; i++)
+        {
+            Vector2Int to = stepSequence[i];
+            Vector3 fromWorld = gridManager.GridToWorld(from.x, from.y);
+            Vector3 toWorld = gridManager.GridToWorld(to.x, to.y);
+            Vector2 fromFlat = new Vector2(fromWorld.x, fromWorld.z);
+            Vector2 toFlat = new Vector2(toWorld.x, toWorld.z);
+            sumDistance += Vector2.Distance(fromFlat, toFlat);
+            from = to;
+        }
+
+        return sumDistance / speed;
+    }
+
+    private FloorTile FindNearestFloorTile(Vector3 worldPos, float maxDistance)
+    {
+        FloorTile[] floorTiles = FindObjectsByType<FloorTile>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        if (floorTiles == null || floorTiles.Length == 0)
+            return null;
+
+        float bestSqrDistance = float.PositiveInfinity;
+        FloorTile best = null;
+        float maxSqrDistance = maxDistance > 0f ? (maxDistance * maxDistance) : float.PositiveInfinity;
+
+        for (int i = 0; i < floorTiles.Length; i++)
+        {
+            FloorTile floorTile = floorTiles[i];
+            if (floorTile == null)
+                continue;
+
+            float sqrDistance = (floorTile.transform.position - worldPos).sqrMagnitude;
+            if (sqrDistance > maxSqrDistance)
+                continue;
+
+            if (sqrDistance < bestSqrDistance)
+            {
+                bestSqrDistance = sqrDistance;
+                best = floorTile;
+            }
+        }
+
+        return best;
     }
 }
