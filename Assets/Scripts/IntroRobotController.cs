@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
@@ -59,6 +60,10 @@ public class IntroRobotController : MonoBehaviour
     private string introBodyText = "لازم تظبط اعدادات الموفمنت الاول عشان تقدر تشوف الرساله";
     [SerializeField] private string configureBtnText = "Configure";
 
+    [Header("Developer Shortcut")]
+    [SerializeField] private bool enableDeveloperSkipShortcut = true;
+    [SerializeField] private Key developerSkipKey = Key.F8;
+
     private bool hasTriggered;
     private bool robotPovWasVisibleBeforeMessage;
 
@@ -67,6 +72,11 @@ public class IntroRobotController : MonoBehaviour
         MG1InstructionSequenceController instructions = MG1InstructionSequenceController.Instance ?? FindFirstObjectByType<MG1InstructionSequenceController>();
         if (instructions != null)
             instructions.SetReadTableMessageStage();
+    }
+
+    private void Update()
+    {
+        TryHandleDeveloperSkipShortcut();
     }
 
     private void Awake()
@@ -368,6 +378,31 @@ public class IntroRobotController : MonoBehaviour
             closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(OnCloseButtonClicked);
         }
+    }
+
+    private void TryHandleDeveloperSkipShortcut()
+    {
+        if (!enableDeveloperSkipShortcut)
+            return;
+
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null)
+            return;
+
+        if (!keyboard[developerSkipKey].wasPressedThisFrame)
+            return;
+
+        if (miniGame1Manager != null)
+        {
+            if (miniGame1Manager.IsMiniGameRunning || miniGame1Manager.CurrentPhase == MiniGame1Manager.MiniGame1Phase.Completed)
+                return;
+        }
+
+        if (controlManager != null && controlManager.IsPlayerControlActive)
+            controlManager.ToggleControl();
+
+        Debug.Log($"[IntroRobotController] Developer skip triggered with key {developerSkipKey}.", this);
+        OnConfigureClicked();
     }
 
     private void OnMessagePanelButtonClicked()

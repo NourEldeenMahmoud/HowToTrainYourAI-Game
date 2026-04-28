@@ -14,9 +14,16 @@ public class RobotStabilityApplier : MonoBehaviour
 
     [Header("Fault Roll Timing")]
     [Tooltip("Minimum seconds between random post-MG1 fault checks.")]
-    [SerializeField, Min(0.1f)] private float minFaultCheckIntervalSeconds = 6f;
+    [SerializeField, Min(0.1f)] private float minFaultCheckIntervalSeconds = 10f;
     [Tooltip("Maximum seconds between random post-MG1 fault checks.")]
-    [SerializeField, Min(0.1f)] private float maxFaultCheckIntervalSeconds = 10f;
+    [SerializeField, Min(0.1f)] private float maxFaultCheckIntervalSeconds = 18f;
+    [Tooltip("Scales all post-MG1 fault trigger chances (0.5 = half as frequent).")]
+    [SerializeField, Range(0f, 1f)] private float faultChanceMultiplier = 0.5f;
+    [Tooltip("After any fault triggers, pause new fault rolls for this many seconds.")]
+    [SerializeField, Min(0f)] private float postFaultGracePeriodSeconds = 8f;
+
+    [Header("Debug")]
+    [SerializeField] private bool enableFaultLogging = true;
 
     [Header("Drift Fault Event")]
     [Tooltip("Yaw drift applied while a post-MG1 drift fault event is active.")]
@@ -43,6 +50,7 @@ public class RobotStabilityApplier : MonoBehaviour
     private float activeCameraFaultOffset;
     private float lastCameraFaultOffset;
     private bool persistentFaultsWereAvailable;
+    private float nextAnyFaultAllowedTime;
 
     private void Awake()
     {
@@ -86,14 +94,23 @@ public class RobotStabilityApplier : MonoBehaviour
 
     private void UpdateDriftFaultEvent()
     {
+        if (!IsRobotControlAvailable())
+            return;
+
+        if (Time.time < nextAnyFaultAllowedTime)
+            return;
+
         if (Time.time < nextDriftRollTime || Time.time < driftFaultEndTime)
             return;
 
-        if (UnityEngine.Random.value < robotStats.driftErrorRate)
+        float driftChance = Mathf.Clamp01(robotStats.driftErrorRate * faultChanceMultiplier);
+        if (UnityEngine.Random.value < driftChance)
         {
             float sign = UnityEngine.Random.value < 0.5f ? -1f : 1f;
             activeDriftYawDeg = driftFaultYawDeg * sign;
             driftFaultEndTime = Time.time + driftFaultDurationSeconds;
+            nextAnyFaultAllowedTime = Time.time + Mathf.Max(0f, postFaultGracePeriodSeconds);
+            LogFault($"Drift fault triggered: yaw={activeDriftYawDeg:F1}deg duration={driftFaultDurationSeconds:F1}s chance={driftChance:F2}");
         }
 
         ScheduleNextDriftRoll();
@@ -101,16 +118,27 @@ public class RobotStabilityApplier : MonoBehaviour
 
     private void UpdateSpeedFaultEvent()
     {
+        if (!IsRobotControlAvailable())
+            return;
+
+        if (Time.time < nextAnyFaultAllowedTime)
+            return;
+
         if (Time.time < nextSpeedRollTime)
             return;
 
-        if (UnityEngine.Random.value < robotStats.speedErrorRate)
+        float speedChance = Mathf.Clamp01(robotStats.speedErrorRate * faultChanceMultiplier);
+        if (UnityEngine.Random.value < speedChance)
         {
             if (robotMovement == null)
                 robotMovement = GetComponent<RobotMovement>();
 
             if (robotMovement != null)
+            {
                 robotMovement.CancelSprintFromFault(sprintBlockDurationSeconds);
+                nextAnyFaultAllowedTime = Time.time + Mathf.Max(0f, postFaultGracePeriodSeconds);
+                LogFault($"Speed fault triggered: sprint blocked for {sprintBlockDurationSeconds:F1}s chance={speedChance:F2}");
+            }
         }
 
         ScheduleNextSpeedRoll();
@@ -132,13 +160,16 @@ public class RobotStabilityApplier : MonoBehaviour
             return;
 
         bool shouldApply = ArePersistentFaultsAvailable() && IsRobotControlAvailable();
-        if (shouldApply && Time.time >= nextCameraRollTime && Time.time >= cameraFaultEndTime)
+        if (shouldApply && Time.time >= nextAnyFaultAllowedTime && Time.time >= nextCameraRollTime && Time.time >= cameraFaultEndTime)
         {
-            if (UnityEngine.Random.value < robotStats.cameraErrorRate)
+            float cameraChance = Mathf.Clamp01(robotStats.cameraErrorRate * faultChanceMultiplier);
+            if (UnityEngine.Random.value < cameraChance)
             {
                 float sign = UnityEngine.Random.value < 0.5f ? -1f : 1f;
                 activeCameraFaultOffset = cameraFaultPitchOffsetDeg * sign;
                 cameraFaultEndTime = Time.time + cameraFaultDurationSeconds;
+                nextAnyFaultAllowedTime = Time.time + Mathf.Max(0f, postFaultGracePeriodSeconds);
+                LogFault($"Camera fault triggered: pitchOffset={activeCameraFaultOffset:F1}deg duration={cameraFaultDurationSeconds:F1}s chance={cameraChance:F2}");
             }
 
             ScheduleNextCameraRoll();
@@ -244,5 +275,13 @@ public class RobotStabilityApplier : MonoBehaviour
         {
             robotStats = miniGame1Manager.RobotStats;
         }
+    }
+
+    private void LogFault(string message)
+    {
+        if (!enableFaultLogging)
+            return;
+
+        Debug.Log($"[MG1][PostFault] {message}", this);
     }
 }

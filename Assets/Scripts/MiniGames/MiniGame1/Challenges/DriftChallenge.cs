@@ -31,10 +31,7 @@ public class DriftChallenge : MiniGame1ChallengeBase
 
     public override void BeginChallenge()
     {
-        if (faultState == null && robotTransform != null)
-        {
-            faultState = robotTransform.GetComponent<MiniGame1FaultState>();
-        }
+        ResolveReferences();
 
         running = true;
         startTime = Time.time;
@@ -43,20 +40,26 @@ public class DriftChallenge : MiniGame1ChallengeBase
         samples = 0;
         loggedEnd = false;
         lastRobotPosition = robotTransform != null ? robotTransform.position : Vector3.zero;
-        if (robotMovement == null)
-            robotMovement = ResolveRobotMovement();
         Debug.Log($"[MG1][Drift] Begin driftAngle={driftAngleDeg} duration={challengeDurationSeconds:F1}s");
 
         if (faultState != null)
         {
             faultState.faultsEnabled = true;
             faultState.yawDriftDeg = driftAngleDeg;
+            if (robotMovement != null)
+                robotMovement.SetMiniGameFaultState(faultState);
+            Debug.Log($"[MG1][Drift] Applying fault on '{faultState.gameObject.name}' yaw={faultState.yawDriftDeg:F1}");
         }
     }
 
     private void Update()
     {
-        if (!running || robotTransform == null) return;
+        if (!running) return;
+
+        if (robotTransform == null || robotMovement == null || faultState == null)
+            ResolveReferences();
+
+        if (robotTransform == null) return;
 
         Vector3 movementDelta = robotTransform.position - lastRobotPosition;
         lastRobotPosition = robotTransform.position;
@@ -173,5 +176,32 @@ public class DriftChallenge : MiniGame1ChallengeBase
         if (movement == null)
             movement = FindFirstObjectByType<RobotMovement>();
         return movement;
+    }
+
+    private void ResolveReferences()
+    {
+        if (robotMovement == null)
+            robotMovement = ResolveRobotMovement();
+
+        if (robotTransform == null && robotMovement != null)
+            robotTransform = robotMovement.transform;
+
+        if (robotTransform == null && faultState != null)
+            robotTransform = faultState.transform;
+
+        if (faultState == null && robotTransform != null)
+            faultState = robotTransform.GetComponent<MiniGame1FaultState>();
+
+        if (faultState == null && robotMovement != null)
+            faultState = robotMovement.GetComponent<MiniGame1FaultState>();
+
+        if (faultState == null && robotTransform != null)
+            faultState = robotTransform.GetComponentInParent<MiniGame1FaultState>();
+
+        if (faultState == null && robotTransform != null)
+            faultState = robotTransform.GetComponentInChildren<MiniGame1FaultState>(true);
+
+        if (faultState == null && robotMovement != null)
+            faultState = robotMovement.gameObject.AddComponent<MiniGame1FaultState>();
     }
 }

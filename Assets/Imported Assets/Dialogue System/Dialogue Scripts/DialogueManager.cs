@@ -29,6 +29,10 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private float fadeSpeed = 2f;
     [SerializeField, Min(0.05f)] private float sceneTransitionFadeDuration = 0.35f;
 
+    [Header("Developer Shortcut")]
+    [SerializeField] private bool enableDeveloperSkipShortcut = true;
+    [SerializeField] private Key developerSkipKey = Key.F8;
+
     private int currentIndex = 0;
     private Camera currentCamera;
     private GameObject currentCharacter;
@@ -78,6 +82,42 @@ public class DialogueManager : MonoBehaviour
         {
             NextStep();
         }
+
+        if (Keyboard.current != null && enableDeveloperSkipShortcut &&
+            Keyboard.current[developerSkipKey].wasPressedThisFrame)
+        {
+            SkipDialogueToSceneTransition();
+        }
+    }
+
+    private void SkipDialogueToSceneTransition()
+    {
+        if (sequence == null || sequence.steps == null || sequence.steps.Count == 0)
+            return;
+
+        int targetIndex = -1;
+        for (int i = currentIndex; i < sequence.steps.Count; i++)
+        {
+            if (sequence.steps[i].loadNewScene)
+            {
+                targetIndex = i;
+                break;
+            }
+        }
+
+        if (targetIndex < 0)
+            targetIndex = sequence.steps.Count - 1;
+
+        currentIndex = Mathf.Clamp(targetIndex, 0, sequence.steps.Count - 1);
+
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(typingCoroutine);
+            typingCoroutine = null;
+        }
+
+        Debug.Log($"[DialogueManager] Developer skip triggered with key {developerSkipKey}.", this);
+        NextStep();
     }
 
     private static void EnsureDialogueCursor()

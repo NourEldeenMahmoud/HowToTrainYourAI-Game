@@ -34,8 +34,7 @@ public class RobotMovement : MonoBehaviour
         controller = GetComponent<CharacterController>();
         anim = robotObj != null ? robotObj.GetComponentInParent<Animator>() : GetComponentInChildren<Animator>();
 
-        if (miniGameFaultState == null)
-            miniGameFaultState = GetComponent<MiniGame1FaultState>();
+        ResolveMiniGameFaultState();
 
         if (stabilityApplier == null)
             stabilityApplier = GetComponent<RobotStabilityApplier>();
@@ -84,6 +83,11 @@ public class RobotMovement : MonoBehaviour
         isSprinting = false;
     }
 
+    public void SetMiniGameFaultState(MiniGame1FaultState faultState)
+    {
+        miniGameFaultState = faultState;
+    }
+
     void Update()
     {
         RotateOrientation();
@@ -106,6 +110,9 @@ public class RobotMovement : MonoBehaviour
     void ApplyMovement()
     {
         if (orientation == null) return;
+
+        if (miniGameFaultState == null)
+            ResolveMiniGameFaultState();
 
         Vector3 forward = orientation.forward;
         Vector3 right = orientation.right;
@@ -154,5 +161,17 @@ public class RobotMovement : MonoBehaviour
         finalVelocity.y = verticalVelocity;
 
         controller.Move(finalVelocity * Time.deltaTime);
+    }
+
+    private void ResolveMiniGameFaultState()
+    {
+        if (miniGameFaultState != null)
+            return;
+
+        miniGameFaultState = GetComponent<MiniGame1FaultState>();
+        if (miniGameFaultState == null)
+            miniGameFaultState = GetComponentInParent<MiniGame1FaultState>();
+        if (miniGameFaultState == null)
+            miniGameFaultState = GetComponentInChildren<MiniGame1FaultState>(true);
     }
 }
