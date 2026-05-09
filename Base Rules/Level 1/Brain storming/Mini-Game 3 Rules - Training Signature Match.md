@@ -1,270 +1,300 @@
----
-dg-publish: true
----
 
-# Mini-Game 3 Rules - Training Signature Match
+## 🎯 فكرة اللعبة
 
-This file defines the current intended direction for Mini-Game 3 based on the implemented MG1 learning/fault system and the planned MG2 energy/path system.
+مختبر روبوتات فيه أجهزة وأدوات مش في مكانها.  
+اللاعب (كريم) بيوجه روبوت علشان:
 
-MG3 should not be another basic tutorial. It should be a validation challenge that checks whether the robot has learned from previous mini-games.
-
----
-
-## 1. Core Design Rule
-
-Mini-Game 3 is a combined validation test.
-
-It should use the history of:
-
-```text
-MG1 movement calibration
-MG2 path/energy efficiency
-```
-
-It should not block the grandfather message forever. The message progression should already be meaningfully advanced after MG2.
+- ينفذ مهام ترتيب وإعادة ضبط المختبر
+- عن طريق Click-to-Move + تفاعل مع الأجهزة
+- وكل Task بيعلم سلوك جديد
 
 ---
 
-## 2. Story Purpose
+# 🏗️ أولًا: أنظمة اللعبة (Game Architecture)
 
-By MG3, the robot has been trained in basic movement and efficiency. MG3 should test whether it can apply those skills in a more autonomous or semi-autonomous situation.
+## 1. 🤖 Robot System
 
-Possible story purpose:
+مسؤول عن:
 
-```text
-The house security system asks for a training signature match.
-The robot must prove it can repeat learned behavior patterns reliably.
-```
-
-This makes MG3 feel like a system validation rather than random extra training.
+- الحركة بالماوس (Click-to-Move)
+- الدوران ناحية الهدف
+- التوقف عند الوصول
+- التفاعل مع الأجهزة (حمل/دفع)
 
 ---
 
-## 3. Relationship To MG1
+## 2. 🧭 Movement System (Click-to-Move)
 
-MG1 produced three future fault probabilities:
-
-```text
-driftErrorRate
-cameraErrorRate
-speedErrorRate
-```
-
-MG3 can reference those categories:
-
-```text
-drift correction memory
-camera alignment memory
-speed/sprint reliability
-```
-
-Important: MG3 should not duplicate MG1 exactly. It should test learned behavior in a new context.
+- اللاعب يضغط على الأرض
+- Raycast من الكاميرا
+- تحديد نقطة الهدف
+- الروبوت يتحرك Smooth لها
+- يقف عند الوصول
 
 ---
 
-## 4. Relationship To MG2
+## 3. 🧩 Interaction System
 
-MG2 should teach:
+مسؤول عن:
 
-```text
-energy efficiency
-path accuracy
-decision confidence
-```
-
-MG3 can include route choices or limited intervention where the robot must use efficient behavior.
+- اكتشاف الأجهزة القريبة
+- حمل الجهاز أو دفعه
+- ربط الجهاز بالروبوت أثناء الحركة
 
 ---
 
-## 5. Proposed Core Mode - Training Signature Match
+## 4. 📦 Device System
 
-The system shows or generates a target behavior signature, and the player/robot must match it.
+كل جهاز فيه:
 
-Examples of target signatures:
-
-```text
-move straight under mild drift
-align camera after sudden offset
-choose efficient route around obstacle
-maintain sprint timing without wasting energy
-reach target with limited corrections
-```
-
-The player may have limited override chances.
+- ID / Tag (نوعه)
+- حالة (في مكانه / محمول / خارج المكان)
+- Rigidbody (فيزيكس)
+- إمكانية النقل أو التثبيت
 
 ---
 
-## 6. Suggested Rules
+## 5. 🟩 Slot System (البلاطات)
 
-### Rule A - Movement Echo
+كل بلاطة فيها:
 
-The system creates movement scenarios inspired by MG1.
-
-Examples:
-
-```text
-brief drift event
-camera pitch offset
-sprint cancellation risk
-```
-
-The player/robot must recover faster than in MG1.
-
-Evaluation:
-
-```text
-correction response time
-average correction error
-number of interventions
-```
-
-### Rule B - Energy/Path Echo
-
-The system creates route choices inspired by MG2.
-
-Examples:
-
-```text
-short risky route
-long safe route
-energy-saving route
-blocked or inefficient route
-```
-
-Evaluation:
-
-```text
-chosen route efficiency
-energy remaining
-collision count
-decision timing
-```
-
-### Rule C - Limited Override Check
-
-The robot performs part of the task semi-autonomously.
-
-The player has limited overrides.
-
-Recommended default:
-
-```text
-3 free overrides
-extra overrides reduce score
-```
-
-Evaluation:
-
-```text
-fewer overrides = better robot learning
-good overrides = acceptable
-bad or excessive overrides = lower score
-```
+- Tag أو ID مطابق للجهاز الصحيح
+- حالة (Empty / Filled)
+- Light Indicator (أحمر → أخضر)
+- Snap Position (مكان تثبيت الجهاز)
 
 ---
 
-## 7. Possible Final Score
+## 6. 📋 Task Manager (مهم جدًا)
 
-Suggested MG3 final categories:
+مسؤول عن:
 
-```text
-Training Match Accuracy = 40%
-Autonomy / Override Efficiency = 30%
-Energy & Path Discipline = 30%
-```
-
-Alternative if movement is central:
-
-```text
-Movement Recovery = 35%
-Decision Accuracy = 35%
-Override Efficiency = 30%
-```
+- تشغيل التاسكات بالترتيب
+- متابعة التقدم
+- الانتقال بين Task 1 → 2 → 3
+- إعلان النهاية
 
 ---
 
-## 8. Fail / Pass Rules
+## 7. 🖥️ UI System
 
-Recommended:
+مسؤول عن:
 
-```text
-Excellent = 90-100
-Good = 70-89
-Average = 50-69
-Fail = below 50
-```
-
-Fail behavior should follow the project rule:
-
-```text
-No robot stat update
-Retry required
-Do not progress through locked story gate
-```
+- عرض التعليمات
+- صورة الجهاز المطلوب
+- حالة التاسك
+- رسالة النهاية
 
 ---
 
-## 9. Robot Update Direction
+## 8. 🎮 Game State Manager
 
-MG3 should not overwrite MG1 and MG2 results blindly.
-
-It should improve higher-level stats such as:
-
-```text
-decisionConfidence
-inputResponsiveness
-stability
-energyEfficiency
-```
-
-If MG3 uses future fault probabilities, it should only reduce them slightly, not reset them to zero.
-
-Example:
-
-```text
-Excellent MG3 -> reduce all current fault probabilities by 10-15%
-Good MG3 -> reduce by 5-10%
-Average MG3 -> small/no reduction
-Fail -> no update
-```
+- Idle
+- Task1
+- Task2
+- Task3
+- Complete
 
 ---
 
-## 10. Implementation Notes For Later
+# 🧭 ثانيًا: فلو حركة الروبوت (Click-to-Move)
 
-When MG3 is implemented, it should have:
+## 🎯 الفلو
 
-```text
-MiniGame3Manager
-MiniGame3LearningProfileSO
-MiniGame3ScoringEngine
-MiniGame3RobotStatUpdater
-MiniGame3ResultScreenUI
-```
-
-It should follow MG1/MG2 patterns:
-
-- collect data during game;
-- evaluate at the end;
-- result screen gates apply/retry;
-- stat update only on pass;
-- no mid-game permanent stat updates.
+1. اللاعب يضغط بالماوس
+2. Raycast من الكاميرا
+3. تحديد نقطة على الأرض
+4. حفظ Target Position
+5. الروبوت يتحرك ليها
+6. يلف ناحية الاتجاه
+7. لما يقرب → يقف
 
 ---
 
-## 11. Current Dependency Warning
+## 🔄 النتيجة
 
-MG3 should understand the current MG1 post-fault system:
+Click → Move → Rotate → Stop
 
-```text
-RobotStabilityApplier owns drift/camera/speed event faults.
+---
+
+# 🤖 ثالثًا: فلو حمل الجهاز وتحريكه
+
+## 🎯 السيناريو الأساسي
+
+### 1. اكتشاف جهاز قريب
+
+- الروبوت يقرب من جهاز
+- يظهر Prompt (Interact)
+
+---
+
+### 2. حمل الجهاز
+
+- اللاعب يضغط زر (مثلاً E)
+- الجهاز:
+    - يتربط بالروبوت (Parent أو Follow)
+    - أو يتم تعطيل فيزيكس مؤقت
+
+---
+
+### 3. تحريك الجهاز
+
+- الجهاز يتحرك مع الروبوت
+- الروبوت يروح للبلاطة المطلوبة
+
+---
+
+### 4. الوصول للبلاطة
+
+- Check: هل دي البلاطة الصح؟
+
+---
+
+### 5. التثبيت
+
+- فك الربط
+- Snap الجهاز في مكان البلاطة
+
+---
+
+### 6. التحقق
+
+- لو صح:
+    - البلاطة تنور أخضر
+    - تحديث تقدم التاسك
+
+---
+
+# 🏷️ رابعًا: نظام Tags (الربط بين الأجهزة والبلاطات)
+
+## 🧩 الأجهزة:
+
+- Device_A
+- Device_B
+- Size_Small / Medium / Large
+- Task2_Device
+
+---
+
+## 🧩 البلاطات:
+
+- Slot_Task1_A
+- Slot_Task2_Group
+- Slot_SizeSort
+
+---
+
+## 🎯 منطق التحقق:
+
+- جهاز + بلاطة = Match؟  
+    → لو صح: Success
+
+---
+
+# 🎮 خامسًا: Tasks Design (اللعبة نفسها)
+
+---
+
+## 🟢 Task 1 — Place Specific Devices
+
+### الهدف:
+
+كل جهاز له مكان محدد
+
+### الفلو:
+
+- UI يعرض جهاز + مكانه
+- اللاعب يحرك الجهاز للبلاطة الصح
+- البلاطة تنور أخضر عند النجاح
+- 3 أجهزة
+
+---
+
+## 🟡 Task 2 — Grouping Devices
+
+### الهدف:
+
+تجميع أجهزة من نفس النوع
+
+### الفلو:
+
+- 4 أجهزة
+- 4 بلاطات
+- كل جهاز له مجموعة
+- لازم تتجمع صح
+
+---
+
+## 🔵 Task 3 — Sorting by Size
+
+### الهدف:
+
+ترتيب الأجهزة من الكبير للصغير
+
+### الفلو:
+
+- أجهزة مختلفة الأحجام
+- ترتيب من اليمين لليسار
+- تحقق عند كل وضع
+
+---
+
+# 🔄 سادسًا: Game Flow الكامل
+
+## 🎬 البداية
+
+- دخول المختبر
+- كريم (UI) يشرح المهمة
+- Task 1 يبدأ
+
+---
+
+## 🟢 Task 1 Flow
+
+1. UI يعرض الجهاز المطلوب
+2. اللاعب يضغط → الروبوت يتحرك
+3. يلتقط الجهاز
+4. يوصله للبلاطة
+5. البلاطة تنور أخضر
+6. تكرار 3 مرات
+
+---
+
+## 🟡 Task 2 Flow
+
+1. UI يشرح التجميع
+2. اللاعب يجمع الأجهزة المتشابهة
+3. يضعهم في البلاطات المناسبة
+4. تحقق لكل مجموعة
+
+---
+
+## 🔵 Task 3 Flow
+
+1. UI يطلب الترتيب حسب الحجم
+2. اللاعب يرتب من الكبير للصغير
+3. تحقق ترتيب كامل
+
+---
+
+## 🎉 النهاية
+
+- كل البلاطات خضراء
+- رسالة:
+    
+    > “المختبر جاهز بالكامل”
+    
+- ممكن:
+    - تقييم أداء
+    - عدد الأخطاء
+    - زمن التنفيذ
+
+---
+
+# ⚙️ سابعًا: نظام التنفيذ داخل Unity (Implementation Map)
+
+## 🔧 Core Loop:
+
 ```
-
-If MG3 needs to temporarily inject its own faults, it should not fight `RobotStabilityApplier`. Options:
-
-```text
-temporarily pause persistent faults during MG3
-or reuse the same event system with explicit MG3 control
+Click↓Raycast↓Set Target↓Robot Move↓Detect Device (optional)↓Pick Device↓Move to Slot↓Check Match↓Snap Device↓Light Green Slot↓Task Progress++
 ```
-
-The project already disables persistent MG1 faults while MG2 is running. MG3 should follow the same rule.
