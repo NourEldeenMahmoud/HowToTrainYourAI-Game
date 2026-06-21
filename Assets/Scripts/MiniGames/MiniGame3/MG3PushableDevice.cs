@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class MG3PushableDevice : MonoBehaviour
 {
@@ -15,6 +15,13 @@ public class MG3PushableDevice : MonoBehaviour
     [Header("References")]
     [SerializeField] private MG3GridManager gridManager;
     [SerializeField] private Transform visualReference;
+
+    [Header("Lock Visuals")]
+    [SerializeField] private Renderer lockedRenderer;
+    [SerializeField] private bool useLockVisual = true;
+    [SerializeField] private Color lockedColor = new Color(0.35f, 1f, 0.55f, 1f);
+    [SerializeField] private bool useEmission = true;
+    [SerializeField] private Color lockedEmissionColor = new Color(0f, 0.6f, 0.25f, 1f);
 
     [Header("Debug")]
     [SerializeField] private bool verboseLogs;
@@ -59,13 +66,21 @@ public class MG3PushableDevice : MonoBehaviour
             currentCoordinate = nearest;
         }
 
+        // Clear any stale occupancy entry that SyncPushableOccupancyFromScene (called from
+        // MG3RobotGridMover.Start) may have written for this device before our own Start()
+        // ran. Without this, IsCellOccupied below would return true because the cell is
+        // occupied by *ourselves*, triggering autoResolveOccupiedStartCell to relocate the
+        // device to a wrong tile — leaving the actual visual position walkable and making
+        // the push interaction fail.
+        gridManager.UnregisterOccupant(this);
+
         if (autoResolveOccupiedStartCell && gridManager.IsCellOccupied(currentCoordinate))
         {
             if (gridManager.TryFindNearestFreeWalkableCoord(transform.position, out Vector2Int freeCell))
             {
                 if (verboseLogs)
                 {
-                    Debug.Log($"[MG3PushableDevice] Start cell occupied for '{name}', remapping {currentCoordinate} -> {freeCell}.", this);
+                    Debug.Log($"[MG3PushableDevice] Start cell occupied for `{name}`, remapping {currentCoordinate} -> {freeCell}.", this);
                 }
 
                 currentCoordinate = freeCell;
@@ -83,15 +98,16 @@ public class MG3PushableDevice : MonoBehaviour
             : MG3GridManager.OccupantKind.Pushable;
         if (!gridManager.RegisterOccupant(this, currentCoordinate, kind))
         {
-            Debug.LogWarning($"[MG3PushableDevice] Could not register '{name}' at {currentCoordinate}.", this);
+            Debug.LogWarning($"[MG3PushableDevice] Could not register `{name}` at {currentCoordinate}.", this);
         }
         else if (verboseLogs)
         {
-            Debug.Log($"[MG3PushableDevice] Registered '{name}' at {currentCoordinate} (locked={locked}).", this);
+            Debug.Log($"[MG3PushableDevice] Registered `{name}` at {currentCoordinate} (locked={locked}).", this);
         }
 
-        // Self‑heal immediately
+        // Self-heal immediately
         ValidateOccupancyConsistency();
+
     }
 
     private void OnDisable()
@@ -117,6 +133,9 @@ public class MG3PushableDevice : MonoBehaviour
 
         ValidateOccupancyConsistency();
         LogState("After lock");
+
+        // Apply or remove the lock visual whenever the locked state changes.
+        ApplyLockVisual(locked);
     }
 
     public void SetCurrentCoordinate(Vector2Int coord, bool snapTransform = true)
@@ -135,7 +154,7 @@ public class MG3PushableDevice : MonoBehaviour
             transform.position = gridManager.GridToWorld(coord);
         }
 
-        // Re‑register after coordinate change
+        // Re-register after coordinate change
         gridManager.UnregisterOccupant(this);
         MG3GridManager.OccupantKind kind = locked ? MG3GridManager.OccupantKind.LockedPushable : MG3GridManager.OccupantKind.Pushable;
         gridManager.RegisterOccupant(this, currentCoordinate, kind);
@@ -168,12 +187,12 @@ public class MG3PushableDevice : MonoBehaviour
 
         gridManager.RegisterOccupant(this, currentCoordinate, MG3GridManager.OccupantKind.Pushable);
         ValidateOccupancyConsistency();
-        if (verboseLogs) Debug.Log($"[MG3PushableDevice] Reset '{name}' to {currentCoordinate}.", this);
+        if (verboseLogs) Debug.Log($"[MG3PushableDevice] Reset `{name}` to {currentCoordinate}.", this);
     }
 
     /// <summary>
-    /// Ensures the grid manager's occupancy matches the device's current locked state and coordinate.
-    /// Auto‑corrects out‑of‑bounds coordinates.
+    /// Ensures the grid manager occupancy matches the device current locked state and coordinate.
+    /// Auto-corrects out-of-bounds coordinates.
     /// </summary>
     public void ValidateOccupancyConsistency()
     {
@@ -181,7 +200,7 @@ public class MG3PushableDevice : MonoBehaviour
 
         Vector2Int coord = currentCoordinate;
 
-        // Auto‑correct out‑of‑bounds coordinates
+        // Auto-correct out-of-bounds coordinates
         if (!gridManager.IsInBounds(coord))
         {
             if (gridManager.TryFindNearestTileCoord(transform.position, out Vector2Int nearest))
@@ -189,11 +208,11 @@ public class MG3PushableDevice : MonoBehaviour
                 coord = nearest;
                 currentCoordinate = coord; // update device
                 if (snapToGridOnStart) transform.position = gridManager.GridToWorld(coord);
-                Debug.Log($"[MG3PushableDevice] Auto‑corrected out‑of‑bounds '{name}' from {currentCoordinate} to {coord}");
+                Debug.Log($"[MG3PushableDevice] Auto-corrected out-of-bounds `{name}` from {currentCoordinate} to {coord}");
             }
             else
             {
-                Debug.LogWarning($"[MG3PushableDevice] '{name}' at {coord} is out of bounds and no nearest tile found.", this);
+                Debug.LogWarning($"[MG3PushableDevice] `{name}` at {coord} is out of bounds and no nearest tile found.", this);
                 return;
             }
         }
@@ -205,11 +224,11 @@ public class MG3PushableDevice : MonoBehaviour
             gridManager.UnregisterOccupant(this);
             if (gridManager.RegisterOccupant(this, coord, kind))
             {
-                Debug.Log($"[FIX] Repaired occupancy for '{name}' at {coord} as {kind}");
+                Debug.Log($"[FIX] Repaired occupancy for `{name}` at {coord} as {kind}");
             }
             else
             {
-                Debug.LogError($"[FIX] Failed to repair occupancy for '{name}' at {coord}");
+                Debug.LogError($"[FIX] Failed to repair occupancy for `{name}` at {coord}");
             }
         }
         else
@@ -222,7 +241,7 @@ public class MG3PushableDevice : MonoBehaviour
                 {
                     gridManager.UnregisterOccupant(this);
                     gridManager.RegisterOccupant(this, coord, expectedKind);
-                    Debug.Log($"[FIX] Corrected occupant kind for '{name}' at {coord} from {existingKind} to {expectedKind}");
+                    Debug.Log($"[FIX] Corrected occupant kind for `{name}` at {coord} from {existingKind} to {expectedKind}");
                 }
             }
         }
@@ -234,6 +253,61 @@ public class MG3PushableDevice : MonoBehaviour
         string occupantKind = "none";
         if (gridManager != null && gridManager.TryGetOccupantKind(currentCoordinate, out MG3GridManager.OccupantKind kind))
             occupantKind = kind.ToString();
-        Debug.Log($"[Frame {Time.frameCount}] {context}: '{name}' locked={locked}, coord={currentCoordinate}, occupantKind={occupantKind}");
+        Debug.Log($"[Frame {Time.frameCount}] {context}: `{name}` locked={locked}, coord={currentCoordinate}, occupantKind={occupantKind}");
+    }
+
+    /// <summary>
+    /// Applies or removes the lock visual on the device renderer using a
+    /// MaterialPropertyBlock so that the shared material is never modified.
+    /// </summary>
+    private void ApplyLockVisual(bool isLocked)
+    {
+        if (!useLockVisual) return;
+
+        // Resolve the renderer: use the explicitly assigned one first, then fall
+        // back to any renderer on the visual reference transform or this transform.
+        Renderer r = lockedRenderer;
+        if (r == null && visualReference != null)
+        {
+            r = visualReference.GetComponentInChildren<Renderer>(true);
+        }
+        if (r == null)
+        {
+            r = GetComponentInChildren<Renderer>(true);
+        }
+
+        if (r == null)
+        {
+            if (verboseLogs)
+            {
+                Debug.LogWarning($"[MG3PushableDevice] `{name}`: No renderer found for lock visual.", this);
+            }
+            return;
+        }
+
+        MaterialPropertyBlock block = new MaterialPropertyBlock();
+        r.GetPropertyBlock(block);
+
+        if (isLocked)
+        {
+            block.SetColor("_Color", lockedColor);
+            if (useEmission)
+            {
+                block.SetColor("_EmissionColor", lockedEmissionColor);
+                // Enable emission keyword so the color is actually visible at runtime.
+                r.material.EnableKeyword("_EMISSION");
+            }
+        }
+        else
+        {
+            // Restore default block state (removes overrides).
+            block = new MaterialPropertyBlock();
+            if (useEmission)
+            {
+                r.material.DisableKeyword("_EMISSION");
+            }
+        }
+
+        r.SetPropertyBlock(block);
     }
 }

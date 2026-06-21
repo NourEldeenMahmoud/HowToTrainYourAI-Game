@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -286,11 +286,33 @@ public class MG3GridManager : MonoBehaviour
 
     public bool RegisterOccupant(Object handle, Vector2Int coord, OccupantKind kind)
     {
-        if (handle == null || !IsInBounds(coord) || occupantsByCell.ContainsKey(coord))
+        if (handle == null || !IsInBounds(coord))
         {
             return false;
         }
 
+        // If the cell is already occupied, decide how to proceed.
+        if (occupantsByCell.ContainsKey(coord))
+        {
+            // Idempotent case: this handle is already the occupant at this cell.
+            // Just update the kind (e.g., Pushable -> LockedPushable) and return success.
+            if (occupantHandlesByCell.TryGetValue(coord, out Object existingHandle) && existingHandle == handle)
+            {
+                occupantsByCell[coord] = kind;
+                return true;
+            }
+
+            // Genuine conflict: a different occupant owns this cell. Fail and log so
+            // authoring mistakes (two devices at the same tile) are visible in the Console.
+            if (verboseLogs && occupantHandlesByCell.TryGetValue(coord, out Object blocker) && blocker != null)
+            {
+                Debug.LogWarning($"[MG3GridManager] RegisterOccupant: cell {coord} already owned by '{blocker.name}'; cannot register '{handle.name}'.", this);
+            }
+
+            return false;
+        }
+
+        // Move old cell entry if this handle was previously registered elsewhere.
         if (occupantCellsByHandle.TryGetValue(handle, out Vector2Int previousCell))
         {
             occupantsByCell.Remove(previousCell);
@@ -402,33 +424,41 @@ public class MG3GridManager : MonoBehaviour
             MG3PushableDevice device = devices[i];
             if (device == null) continue;
 
-            Vector2Int coord = device.CurrentCoordinate;
-            bool wasOutOfBounds = false;
-
-            // Auto‑correct out‑of‑bounds coordinates
+            // Always re-derive the correct grid coordinate from the device's current world
+            // position. Never trust the serialized CurrentCoordinate field: it may hold a
+            // stale value from a previous editor session, or the device may have been moved
+            // in the Scene editor without the coordinate being re-baked. Relying on a stale
+            // coord registers the device at the wrong cell, leaving its visual position
+            // walkable and making it invisible to the push controller.
+            Vector2Int coord = WorldToGrid(device.transform.position);
             if (!IsInBounds(coord))
             {
                 if (TryFindNearestTileCoord(device.transform.position, out Vector2Int nearest))
                 {
                     coord = nearest;
-                    device.SetCurrentCoordinate(coord, false); // update device without snapping transform
-                    wasOutOfBounds = true;
                 }
                 else
                 {
-                    Debug.LogWarning($"[MG3GridManager] Device '{device.name}' has invalid coordinate {coord} and no nearest tile found.", this);
+                    Debug.LogWarning($"[MG3GridManager] Device '{device.name}' world position has no matching tile; skipping sync.", this);
                     continue;
                 }
             }
 
-            // Only re‑register if necessary (avoid churn)
+            // If the serialized coordinate differs from the world-position-derived one,
+            // update the device so Start() and ResetToTaskStart() use the correct value.
+            if (device.CurrentCoordinate != coord)
+            {
+                device.SetCurrentCoordinate(coord, false);
+            }
+
+            // Short-circuit if occupancy is already correct.
             bool alreadyCorrect = occupantsByCell.TryGetValue(coord, out OccupantKind existingKind) &&
                                   occupantHandlesByCell.TryGetValue(coord, out Object existingHandle) &&
                                   existingHandle == device &&
                                   ((device.IsLocked && existingKind == OccupantKind.LockedPushable) ||
                                    (!device.IsLocked && existingKind == OccupantKind.Pushable));
 
-            if (!alreadyCorrect || wasOutOfBounds)
+            if (!alreadyCorrect)
             {
                 UnregisterOccupant(device);
                 OccupantKind kind = device.IsLocked ? OccupantKind.LockedPushable : OccupantKind.Pushable;
@@ -438,7 +468,7 @@ public class MG3GridManager : MonoBehaviour
                 }
             }
 
-            // Self‑healing call
+            // Self-healing call — verifies the maps are consistent after any changes above.
             device.ValidateOccupancyConsistency();
         }
 

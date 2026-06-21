@@ -247,6 +247,41 @@ public class MiniGame3Manager : MonoBehaviour
             }
         }
 
+        // ── Re-register locked devices from ALL tasks ─────────────────────────
+        // ClearAllRuntimeOccupancy() above wiped every occupant, including devices
+        // that were already locked by previously completed tasks. Locked devices
+        // skip ResetToTaskStart() (correct — they must not move), so we must
+        // manually restore their grid occupancy here so they continue to block
+        // movement and pathfinding as solid LockedPushable obstacles.
+        if (gridManager != null && tasks != null)
+        {
+            for (int t = 0; t < tasks.Length; t++)
+            {
+                MG3TaskDefinition otherTask = tasks[t];
+                if (otherTask == null) continue;
+
+                MG3PushableDevice[] otherDevices = otherTask.Devices;
+                if (otherDevices == null) continue;
+
+                for (int d = 0; d < otherDevices.Length; d++)
+                {
+                    MG3PushableDevice dev = otherDevices[d];
+                    if (dev == null || !dev.IsLocked) continue;
+
+                    // Only register if the cell is not already claimed (another
+                    // task may reference the same device object; guard duplicates).
+                    if (!gridManager.IsCellOccupied(dev.CurrentCoordinate))
+                    {
+                        gridManager.RegisterOccupant(dev, dev.CurrentCoordinate, MG3GridManager.OccupantKind.LockedPushable);
+                        if (verboseLogs)
+                        {
+                            Debug.Log($"[MiniGame3Manager] Restored locked occupancy for '{dev.name}' at {dev.CurrentCoordinate} after reset.", this);
+                        }
+                    }
+                }
+            }
+        }
+
         if (robotMover != null)
         {
             if (repositionRobot)
