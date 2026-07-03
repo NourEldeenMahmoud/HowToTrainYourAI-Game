@@ -58,7 +58,7 @@ public class MiniGame3Manager : MonoBehaviour
             var names = new List<string>(managers.Length);
             for (int i = 0; i < managers.Length; i++)
             {
-                names.Add($"{managers[i].name}#{managers[i].GetInstanceID()}");
+                names.Add($"{managers[i].name}#{managers[i].GetEntityId()}");
             }
 
             Debug.LogWarning($"[MiniGame3Manager] Multiple manager instances found ({managers.Length}): {string.Join(", ", names)}", this);
@@ -106,11 +106,19 @@ public class MiniGame3Manager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            SkipCurrentTask();
+        }
+    }
+
     private void Start()
     {
         if (verboseLogs)
         {
-            Debug.Log($"[MiniGame3Manager] Start on '{name}'#{GetInstanceID()} autoStartOnSceneLoad={autoStartOnSceneLoad} useTaskRobotStartCoordinate={useTaskRobotStartCoordinate}", this);
+            Debug.Log($"[MiniGame3Manager] Start on '{name}'#{GetEntityId()} autoStartOnSceneLoad={autoStartOnSceneLoad} useTaskRobotStartCoordinate={useTaskRobotStartCoordinate}", this);
         }
 
         SetPhase(MiniGame3Phase.Idle);
@@ -144,6 +152,42 @@ public class MiniGame3Manager : MonoBehaviour
         }
 
         StartTask(0);
+    }
+
+    public void SkipCurrentTask()
+    {
+        MG3TaskDefinition task = CurrentTask;
+        if (task == null || CurrentPhase == MiniGame3Phase.Completed) return;
+
+        MG3PushableDevice[] taskDevices = task.Devices;
+        if (taskDevices != null)
+        {
+            for (int i = 0; i < taskDevices.Length; i++)
+            {
+                if (taskDevices[i] != null)
+                    taskDevices[i].SetLocked(true);
+            }
+        }
+
+        MG3TargetSlot[] slots = task.Slots;
+        if (slots != null)
+        {
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] != null)
+                    slots[i].SetSolved(true);
+            }
+        }
+
+        EmitFeedback($"Skipped: {task.TaskName}");
+        TaskCompleted?.Invoke(task, CurrentTaskIndex, tasks.Length);
+        StartCoroutine(SkipAndAdvance());
+    }
+
+    private IEnumerator SkipAndAdvance()
+    {
+        yield return new WaitForSeconds(completionPopupSeconds);
+        StartTask(CurrentTaskIndex + 1);
     }
 
     [ContextMenu("Reset Current Task")]

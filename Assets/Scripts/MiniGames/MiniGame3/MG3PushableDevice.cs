@@ -87,7 +87,11 @@ public class MG3PushableDevice : MonoBehaviour
             }
         }
 
-        startingCoordinate = currentCoordinate;
+        // Only auto-assign startingCoordinate if it wasn't set in the Inspector (still default 0,0)
+        if (startingCoordinate == Vector2Int.zero)
+        {
+            startingCoordinate = currentCoordinate;
+        }
         if (snapToGridOnStart)
         {
             transform.position = gridManager.GridToWorld(currentCoordinate);
@@ -177,12 +181,11 @@ public class MG3PushableDevice : MonoBehaviour
             {
                 currentCoordinate = nearest;
             }
-            transform.position = gridManager.GridToWorld(currentCoordinate);
         }
         else
         {
             currentCoordinate = startingCoordinate;
-            transform.position = gridManager.GridToWorld(currentCoordinate);
+            transform.position = startingWorldPosition;
         }
 
         gridManager.RegisterOccupant(this, currentCoordinate, MG3GridManager.OccupantKind.Pushable);

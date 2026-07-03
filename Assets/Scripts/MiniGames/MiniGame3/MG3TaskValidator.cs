@@ -93,6 +93,7 @@ public class MG3TaskValidator : MonoBehaviour
         for (int i = 0; i < slots.Length; i++)
         {
             MG3TargetSlot slot = slots[i];
+            if (slot == null) continue;
             bool solved = false;
 
             if (slot != null && devicesByCoord.TryGetValue(slot.Coordinate, out MG3PushableDevice device) && device != null)
@@ -117,6 +118,7 @@ public class MG3TaskValidator : MonoBehaviour
         for (int i = 0; i < slots.Length; i++)
         {
             MG3TargetSlot slot = slots[i];
+            if (slot == null) continue;
             bool solved = false;
 
             if (slot != null && devicesByCoord.TryGetValue(slot.Coordinate, out MG3PushableDevice device) && device != null)
@@ -141,6 +143,7 @@ public class MG3TaskValidator : MonoBehaviour
         for (int i = 0; i < slots.Length; i++)
         {
             MG3TargetSlot slot = slots[i];
+            if (slot == null) continue;
             bool solved = false;
 
             if (slot != null && devicesByCoord.TryGetValue(slot.Coordinate, out MG3PushableDevice device) && device != null)

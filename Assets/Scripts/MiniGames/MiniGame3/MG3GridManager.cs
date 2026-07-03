@@ -274,6 +274,15 @@ public class MG3GridManager : MonoBehaviour
         return origin + new Vector3(coord.x * cellSize, worldY, coord.y * cellSize);
     }
 
+    public Vector3 GetTileWorldPosition(Vector2Int coord)
+    {
+        if (tiles.TryGetValue(coord, out MG3GridTile tile) && tile != null)
+        {
+            return tile.transform.position;
+        }
+        return GridToWorld(coord);
+    }
+
     public bool IsCellOccupied(Vector2Int coord)
     {
         return occupantsByCell.ContainsKey(coord);
