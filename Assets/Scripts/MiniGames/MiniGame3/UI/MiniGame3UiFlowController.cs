@@ -283,10 +283,7 @@ public class MiniGame3UiFlowController : MonoBehaviour
 
     private void OnNextClicked()
     {
-        if (!string.IsNullOrWhiteSpace(nextSceneName))
-        {
-            SceneManager.LoadScene(nextSceneName);
-        }
+        SceneTransitionFader.TransitionToScene("PostCredits", -1, 1f);
     }
 
     private static string CalculateGrade(int resets)

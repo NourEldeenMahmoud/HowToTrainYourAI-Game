@@ -20,6 +20,11 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Oraby/Second MiniGame.unity
     guid: d1ea3ebd8781bee44b1d08eb753d9673
+  - enabled: 1
+    path: Assets/Scenes/Aya/MiniGame 3.unity
+    guid: 994eb3ec71c33ce4b9936bda1eb54d44
+  - enabled: 1
+    path: Assets/Scenes/Aya/PostCredits.unity
+    guid: 8f1c031c07768c84dbb936ec2d57f73a
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  m_UseUCBPForAssetBundles: 0
