@@ -364,7 +364,7 @@ public class MG3PushController : MonoBehaviour
         }
 
         Vector3 startPos = device.transform.position;
-        Vector3 gridEndPos = gridManager.GridToWorld(toCell);
+        Vector3 gridEndPos = device.GetWorldPositionForCoordinate(toCell);
         Vector3 endPos = new Vector3(gridEndPos.x, startPos.y, gridEndPos.z);
         Vector3 robotStartPos = robotMover.transform.position;
         Vector3 gridRobotEnd = gridManager.GridToWorld(fromCell);

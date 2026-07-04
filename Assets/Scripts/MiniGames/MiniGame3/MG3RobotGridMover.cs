@@ -27,6 +27,7 @@ public class MG3RobotGridMover : MonoBehaviour
     [SerializeField, Min(30f)] private float rotationSpeedDegrees = 540f;
     [SerializeField, Min(0.01f)] private float arriveDistance = 0.03f;
     [SerializeField] private bool rotateTowardsMovement = true;
+    [SerializeField] private bool allowRedirectWhileMoving = true;
 
     [Header("Animation")]
     [SerializeField] private Animator robotAnimator;
@@ -40,6 +41,7 @@ public class MG3RobotGridMover : MonoBehaviour
     [SerializeField, Min(0f)] private float ignoredClickLogCooldown = 0.25f;
 
     public event Action<Vector2Int, string> DestinationRejected;
+    public event Action<Vector2Int> DestinationAccepted;
     public event Action<Vector2Int> DestinationReached;
     public event Action<Vector2Int> DestinationRequested;
     public event Action<Vector2Int, Vector2Int> MovementStarted;
@@ -57,6 +59,9 @@ public class MG3RobotGridMover : MonoBehaviour
     private bool hasPushingBool;
     private string lastIgnoredReason;
     private float lastIgnoredLogTime;
+    private bool hasPendingRedirect;
+    private Vector2Int pendingRedirectDestination;
+    private Vector2Int activeStepDestination;
     private Transform Mover => moverTransform != null ? moverTransform : transform;
     private Transform RotationTarget => rotationTransform != null ? rotationTransform : Mover;
 
@@ -97,6 +102,7 @@ public class MG3RobotGridMover : MonoBehaviour
         }
 
         IsMoving = false;
+        ClearPendingRedirect();
         SetWalkingAnimation(false);
         if (gridManager != null)
         {
@@ -235,6 +241,7 @@ public class MG3RobotGridMover : MonoBehaviour
         }
 
         IsMoving = false;
+        ClearPendingRedirect();
         gridManager.UnregisterOccupant(this);
         CurrentGridCoord = coord;
         Mover.position = gridManager.GridToWorld(coord);
@@ -243,9 +250,14 @@ public class MG3RobotGridMover : MonoBehaviour
 
     public bool TryRequestMove(Vector2Int destination)
     {
-        if (IsMovementLockedBySystem || IsMoving)
+        if (IsMovementLockedBySystem)
         {
             return false;
+        }
+
+        if (IsMoving)
+        {
+            return TryQueueRedirect(destination);
         }
 
         DestinationRequested?.Invoke(destination);
@@ -259,6 +271,7 @@ public class MG3RobotGridMover : MonoBehaviour
 
         if (path == null || path.Count <= 1)
         {
+            DestinationRejected?.Invoke(destination, "Already at destination");
             return false;
         }
 
@@ -267,6 +280,7 @@ public class MG3RobotGridMover : MonoBehaviour
             StopCoroutine(moveRoutine);
         }
 
+        DestinationAccepted?.Invoke(destination);
         MovementStarted?.Invoke(CurrentGridCoord, destination);
         moveRoutine = StartCoroutine(MovePath(path));
         return true;
@@ -298,9 +312,9 @@ public class MG3RobotGridMover : MonoBehaviour
 
     private void ProcessClick(Vector2 screenPos)
     {
-        if (IsMoving || IsMovementLockedBySystem)
+        if (IsMovementLockedBySystem)
         {
-            LogIgnoredClick("movement locked or robot is moving");
+            LogIgnoredClick("movement locked");
             return;
         }
 
@@ -317,6 +331,41 @@ public class MG3RobotGridMover : MonoBehaviour
         }
 
         TryRequestMove(destination);
+    }
+
+    private bool TryQueueRedirect(Vector2Int destination)
+    {
+        if (!allowRedirectWhileMoving || pathfinder == null || gridManager == null)
+        {
+            LogIgnoredClick("robot is moving");
+            return false;
+        }
+
+        Vector2Int redirectStart = activeStepDestination;
+        if (!gridManager.IsInBounds(redirectStart))
+        {
+            redirectStart = CurrentGridCoord;
+        }
+
+        DestinationRequested?.Invoke(destination);
+
+        if (destination == redirectStart)
+        {
+            DestinationRejected?.Invoke(destination, "Already at destination");
+            return false;
+        }
+
+        if (!pathfinder.TryFindPath(redirectStart, destination, out List<Vector2Int> path, out string reason) || path == null || path.Count <= 1)
+        {
+            DestinationRejected?.Invoke(destination, reason);
+            Debug.Log($"[MG3RobotGridMover] Redirect rejected {destination}: {reason}", this);
+            return false;
+        }
+
+        pendingRedirectDestination = destination;
+        hasPendingRedirect = true;
+        DestinationAccepted?.Invoke(destination);
+        return true;
     }
 
     private bool TryResolveClickedCoord(Vector2 screenPos, out Vector2Int destination)
@@ -355,6 +404,7 @@ public class MG3RobotGridMover : MonoBehaviour
         for (int i = 1; i < path.Count; i++)
         {
             Vector2Int next = path[i];
+            activeStepDestination = next;
             if (!gridManager.MoveOccupant(this, next))
             {
                 DestinationRejected?.Invoke(next, "Path step became occupied");
@@ -385,12 +435,46 @@ public class MG3RobotGridMover : MonoBehaviour
 
             Mover.position = target;
             CurrentGridCoord = next;
+            if (TryApplyPendingRedirect(ref path))
+            {
+                MovementStarted?.Invoke(CurrentGridCoord, pendingRedirectDestination);
+                i = 0;
+            }
         }
 
         IsMoving = false;
+        ClearPendingRedirect();
         SetWalkingAnimation(false);
         moveRoutine = null;
         DestinationReached?.Invoke(CurrentGridCoord);
+    }
+
+    private bool TryApplyPendingRedirect(ref List<Vector2Int> path)
+    {
+        if (!hasPendingRedirect)
+        {
+            return false;
+        }
+
+        Vector2Int destination = pendingRedirectDestination;
+        ClearPendingRedirect();
+
+        if (!pathfinder.TryFindPath(CurrentGridCoord, destination, out List<Vector2Int> redirectPath, out string reason) || redirectPath == null || redirectPath.Count <= 1)
+        {
+            DestinationRejected?.Invoke(destination, reason);
+            Debug.Log($"[MG3RobotGridMover] Redirect failed from {CurrentGridCoord} to {destination}: {reason}", this);
+            return false;
+        }
+
+        path = redirectPath;
+        pendingRedirectDestination = destination;
+        return true;
+    }
+
+    private void ClearPendingRedirect()
+    {
+        hasPendingRedirect = false;
+        pendingRedirectDestination = default;
     }
 
     private void ResolveAnimator()

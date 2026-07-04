@@ -324,7 +324,11 @@ public class MiniGame3Manager : MonoBehaviour
                     }
                 }
             }
+
+            RegisterFutureTaskDevicesAsBlockers();
         }
+
+        LogTask3DeviceAlignment(task);
 
         if (robotMover != null)
         {
@@ -354,6 +358,73 @@ public class MiniGame3Manager : MonoBehaviour
             }
 
             robotMover.SetMovementLock(false);
+        }
+    }
+
+    private void RegisterFutureTaskDevicesAsBlockers()
+    {
+        if (gridManager == null || tasks == null)
+        {
+            return;
+        }
+
+        for (int t = CurrentTaskIndex + 1; t < tasks.Length; t++)
+        {
+            MG3TaskDefinition futureTask = tasks[t];
+            if (futureTask == null) continue;
+
+            MG3PushableDevice[] futureDevices = futureTask.Devices;
+            if (futureDevices == null) continue;
+
+            for (int d = 0; d < futureDevices.Length; d++)
+            {
+                MG3PushableDevice dev = futureDevices[d];
+                if (dev == null || dev.IsLocked) continue;
+
+                Vector2Int coord = dev.CurrentCoordinate;
+                if (!gridManager.IsInBounds(coord)) continue;
+
+                if (gridManager.IsCellOccupied(coord)) continue;
+
+                gridManager.RegisterOccupant(dev, coord, MG3GridManager.OccupantKind.LockedPushable);
+            }
+        }
+    }
+
+    private void LogTask3DeviceAlignment(MG3TaskDefinition task)
+    {
+        if (gridManager == null || task == null || task.TaskType != MG3TaskType.SizeOrdering)
+        {
+            return;
+        }
+
+        MG3PushableDevice[] taskDevices = task.Devices;
+        if (taskDevices == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < taskDevices.Length; i++)
+        {
+            MG3PushableDevice device = taskDevices[i];
+            if (device == null)
+            {
+                continue;
+            }
+
+            Vector3 actualPosition = device.transform.position;
+            Vector3 gridCenter = gridManager.GridToWorld(device.CurrentCoordinate);
+            Vector3 expectedPosition = device.GetWorldPositionForCoordinate(device.CurrentCoordinate);
+            float planarDistance = Vector2.Distance(
+                new Vector2(actualPosition.x, actualPosition.z),
+                new Vector2(expectedPosition.x, expectedPosition.z));
+
+            Debug.Log(
+                $"[MiniGame3Manager][Task3 Alignment] '{device.name}' " +
+                $"current={device.CurrentCoordinate} start={device.StartingCoordinate} " +
+                $"actual={actualPosition} expectedVisual={expectedPosition} gridCenter={gridCenter} " +
+                $"visualDelta={planarDistance:0.###}",
+                device);
         }
     }
 

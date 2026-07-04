@@ -30,6 +30,7 @@ public class MG3PushableDevice : MonoBehaviour
     [SerializeField] private bool resetUsingAuthoredWorldPosition = true;
 
     private Vector3 startingWorldPosition;
+    private Vector3 startingGridWorldOffset;
 
     public string DeviceId => deviceId;
     public string GroupId => groupId;
@@ -92,9 +93,12 @@ public class MG3PushableDevice : MonoBehaviour
         {
             startingCoordinate = currentCoordinate;
         }
+
+        startingGridWorldOffset = startingWorldPosition - gridManager.GridToWorld(startingCoordinate);
+
         if (snapToGridOnStart)
         {
-            transform.position = gridManager.GridToWorld(currentCoordinate);
+            transform.position = GetWorldPositionForCoordinate(currentCoordinate);
         }
 
         MG3GridManager.OccupantKind kind = locked
@@ -155,7 +159,7 @@ public class MG3PushableDevice : MonoBehaviour
         currentCoordinate = coord;
         if (snapTransform && gridManager != null)
         {
-            transform.position = gridManager.GridToWorld(coord);
+            transform.position = GetWorldPositionForCoordinate(coord);
         }
 
         // Re-register after coordinate change
@@ -185,12 +189,23 @@ public class MG3PushableDevice : MonoBehaviour
         else
         {
             currentCoordinate = startingCoordinate;
-            transform.position = startingWorldPosition;
+            transform.position = GetWorldPositionForCoordinate(startingCoordinate);
         }
 
         gridManager.RegisterOccupant(this, currentCoordinate, MG3GridManager.OccupantKind.Pushable);
         ValidateOccupancyConsistency();
         if (verboseLogs) Debug.Log($"[MG3PushableDevice] Reset `{name}` to {currentCoordinate}.", this);
+    }
+
+    public Vector3 GetWorldPositionForCoordinate(Vector2Int coord)
+    {
+        if (gridManager == null)
+        {
+            return transform.position;
+        }
+
+        Vector3 gridPosition = gridManager.GridToWorld(coord);
+        return resetUsingAuthoredWorldPosition ? gridPosition : gridPosition + startingGridWorldOffset;
     }
 
     /// <summary>
