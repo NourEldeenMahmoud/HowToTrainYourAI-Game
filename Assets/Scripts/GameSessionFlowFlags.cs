@@ -34,6 +34,8 @@ public static class GameSessionFlowFlags
         UnityEngine.Vector3 robotLocalOffset,
         bool faceTowardAnchor)
     {
+        RequestSkipMainMenuOnce();
+
         pendingMiniGame2ReturnSpawn = new MiniGame2ReturnSpawnRequest
         {
             primaryAnchorName = primaryAnchorName,

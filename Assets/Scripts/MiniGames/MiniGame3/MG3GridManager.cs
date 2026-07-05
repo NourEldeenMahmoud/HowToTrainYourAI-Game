@@ -42,6 +42,7 @@ public class MG3GridManager : MonoBehaviour
     private readonly Dictionary<Object, Vector2Int> occupantCellsByHandle = new Dictionary<Object, Vector2Int>();
     private readonly Dictionary<Vector2Int, Object> occupantHandlesByCell = new Dictionary<Vector2Int, Object>();
     private readonly HashSet<Vector2Int> targetSlotCells = new HashSet<Vector2Int>();
+    private readonly HashSet<Vector2Int> labObstacleCells = new HashSet<Vector2Int>();
 
     public int TileCount => tiles.Count;
     public float CellSize => cellSize;
@@ -484,6 +485,76 @@ public class MG3GridManager : MonoBehaviour
         if (logSummary)
         {
             Debug.Log($"[MG3GridManager] Synced {synced}/{devices.Length} pushable occupancies from scene.", this);
+        }
+    }
+
+    public void RegisterLabObstacles(Transform labRoot, bool logSummary = true)
+    {
+        labObstacleCells.Clear();
+
+        if (labRoot == null) return;
+
+        BoxCollider[] colliders = labRoot.GetComponentsInChildren<BoxCollider>(true);
+        int registered = 0;
+
+        // Collect all pushable device coordinates so we don't overwrite them.
+        var pushableCells = new HashSet<Vector2Int>();
+        MG3PushableDevice[] devices = Object.FindObjectsByType<MG3PushableDevice>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        for (int i = 0; i < devices.Length; i++)
+        {
+            if (devices[i] != null)
+            {
+                Vector2Int pc = WorldToGrid(devices[i].transform.position);
+                pushableCells.Add(pc);
+            }
+        }
+
+        for (int c = 0; c < colliders.Length; c++)
+        {
+            BoxCollider col = colliders[c];
+            if (col == null) continue;
+
+            Bounds worldBounds = col.bounds;
+            Vector3 min = worldBounds.min;
+            Vector3 max = worldBounds.max;
+
+            Vector2Int gridMin = WorldToGrid(min);
+            Vector2Int gridMax = WorldToGrid(max);
+
+            for (int gx = gridMin.x; gx <= gridMax.x; gx++)
+            {
+                for (int gy = gridMin.y; gy <= gridMax.y; gy++)
+                {
+                    Vector2Int coord = new Vector2Int(gx, gy);
+                    if (!IsInBounds(coord)) continue;
+                    if (pushableCells.Contains(coord)) continue;
+                    if (!labObstacleCells.Add(coord)) continue;
+
+                    // Register directly into the occupancy dictionaries.
+                    if (!occupantsByCell.ContainsKey(coord))
+                    {
+                        labObstacleCells.Add(coord);
+                        occupantsByCell[coord] = OccupantKind.StaticBlocked;
+                        registered++;
+                    }
+                }
+            }
+        }
+
+        if (logSummary)
+        {
+            Debug.Log($"[MG3GridManager] Registered {registered} lab obstacle cells from {colliders.Length} colliders.", this);
+        }
+    }
+
+    public void RestoreLabObstacles()
+    {
+        foreach (Vector2Int coord in labObstacleCells)
+        {
+            if (!occupantsByCell.ContainsKey(coord))
+            {
+                occupantsByCell[coord] = OccupantKind.StaticBlocked;
+            }
         }
     }
 

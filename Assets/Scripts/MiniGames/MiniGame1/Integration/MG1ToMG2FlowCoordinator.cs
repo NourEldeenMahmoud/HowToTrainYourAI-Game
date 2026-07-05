@@ -105,6 +105,29 @@ public class MG1ToMG2FlowCoordinator : MonoBehaviour
         return true;
     }
 
+    public void DeveloperSkipMiniGame1ToStorageObjective()
+    {
+        if (state == FlowState.Transitioning || state == FlowState.Completed)
+            return;
+
+        ResolveReferences();
+        state = FlowState.GoToStorage;
+        transitionRequested = false;
+        SetRobotPovHiddenForMessage(false);
+        UpdateStorageObjectiveTexts();
+        Log("Developer skip: MiniGame1 skipped -> storage objective enabled");
+    }
+
+    public void DeveloperLoadMiniGame2Now()
+    {
+        if (state == FlowState.Transitioning)
+            return;
+
+        transitionRequested = true;
+        StartCoroutine(FadeOutAndLoadMiniGame2());
+        Log("Developer skip: loading MiniGame2 immediately");
+    }
+
     private void Update()
     {
         if (state != FlowState.AwaitingMessageClose)

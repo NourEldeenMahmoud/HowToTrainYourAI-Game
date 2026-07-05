@@ -12,6 +12,7 @@ public class MiniGame3Manager : MonoBehaviour
     [SerializeField] private MG3RobotGridMover robotMover;
     [SerializeField] private MG3PushController pushController;
     [SerializeField] private MG3TaskValidator taskValidator;
+    [SerializeField] private MG3LabObstacleRegistrar labObstacleRegistrar;
 
     [Header("Task Flow")]
     [SerializeField] private MG3TaskDefinition[] tasks;
@@ -68,6 +69,7 @@ public class MiniGame3Manager : MonoBehaviour
         if (robotMover == null) robotMover = FindFirstObjectByType<MG3RobotGridMover>();
         if (pushController == null) pushController = FindFirstObjectByType<MG3PushController>();
         if (taskValidator == null) taskValidator = FindFirstObjectByType<MG3TaskValidator>();
+        if (labObstacleRegistrar == null) labObstacleRegistrar = FindFirstObjectByType<MG3LabObstacleRegistrar>();
     }
 
     private void OnEnable()
@@ -149,6 +151,12 @@ public class MiniGame3Manager : MonoBehaviour
             {
                 tasks[t].ResetSlotVisuals();
             }
+        }
+
+        // Register lab device obstacles once before the first task.
+        if (labObstacleRegistrar != null)
+        {
+            labObstacleRegistrar.Register();
         }
 
         StartTask(0);
@@ -326,6 +334,12 @@ public class MiniGame3Manager : MonoBehaviour
             }
 
             RegisterFutureTaskDevicesAsBlockers();
+
+            // Restore lab device obstacles that were cleared by ClearAllRuntimeOccupancy().
+            if (labObstacleRegistrar != null)
+            {
+                labObstacleRegistrar.Restore();
+            }
         }
 
         LogTask3DeviceAlignment(task);

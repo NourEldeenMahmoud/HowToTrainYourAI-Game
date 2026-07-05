@@ -55,6 +55,7 @@ public class MiniGame1Manager : MonoBehaviour
     private bool isRunning;
     private MiniGame1RawMetrics raw;
     private MiniGame1Phase phase = MiniGame1Phase.None;
+    private Coroutine runSequenceRoutine;
 
     public MiniGame1EvaluationResult LastResult { get; private set; }
 
@@ -96,7 +97,28 @@ public class MiniGame1Manager : MonoBehaviour
             // Starting from scratch => clear any previously saved calibration result.
             robotStats.ResetSavedCalibrationResult();
         }
-        StartCoroutine(RunSequence());
+        runSequenceRoutine = StartCoroutine(RunSequence());
+    }
+
+    public void DeveloperCompleteMiniGame()
+    {
+        if (phase == MiniGame1Phase.Completed)
+            return;
+
+        if (runSequenceRoutine != null)
+        {
+            StopCoroutine(runSequenceRoutine);
+            runSequenceRoutine = null;
+        }
+
+        LastResult = CreateDeveloperSuccessResult();
+        MiniGame1RobotStatUpdater.ApplyUpdateOnce(learningProfile, robotStats, LastResult);
+
+        isRunning = false;
+        SetPhase(MiniGame1Phase.Completed);
+
+        Log("[MG1] Developer skip completed MiniGame1 with Excellent result");
+        MiniGameCompleted?.Invoke(LastResult);
     }
 
     private void Log(string msg)
@@ -230,9 +252,33 @@ public class MiniGame1Manager : MonoBehaviour
         Log("[MG1] RunSequence end");
 
         SetPhase(MiniGame1Phase.Completed);
+        runSequenceRoutine = null;
 
         Log("[MG1] Invoking MiniGameCompleted event");
         MiniGameCompleted?.Invoke(LastResult);
+    }
+
+    private static MiniGame1EvaluationResult CreateDeveloperSuccessResult()
+    {
+        return new MiniGame1EvaluationResult
+        {
+            finalScore = 100f,
+            tier = MiniGameTier.Excellent,
+            metricScores = new MiniGameMetricScores
+            {
+                pathAccuracy = 100f,
+                correctionAccuracy = 100f,
+                responseTime = 100f,
+                speedConsistency = 100f,
+                targetAlignment = 100f
+            },
+            challengeScores = new MiniGame1ChallengeScores
+            {
+                driftScore = 100f,
+                cameraScore = 100f,
+                speedScore = 100f
+            }
+        };
     }
 
     private void ResolveChallenges()

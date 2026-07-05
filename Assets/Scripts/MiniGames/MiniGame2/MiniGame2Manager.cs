@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class MiniGame2Manager : MonoBehaviour
 {
@@ -52,8 +53,8 @@ public class MiniGame2Manager : MonoBehaviour
     [SerializeField] private bool useStartTileAsReturnFallback = true;
     [SerializeField] private string mainSceneGateAnchorName = "Warehouse_Door.B";
     [SerializeField] private string mainSceneGateFallbackAnchorName = "Warehouse_Door.F";
-    [SerializeField] private Vector3 mainScenePlayerLocalOffset = new Vector3(-0.85f, 0f, -2.2f);
-    [SerializeField] private Vector3 mainSceneRobotLocalOffset = new Vector3(0.75f, 0f, -1.35f);
+    [SerializeField] private Vector3 mainScenePlayerLocalOffset = new Vector3(-0.85f, 0f, -3.8f);
+    [SerializeField] private Vector3 mainSceneRobotLocalOffset = new Vector3(0.75f, 0f, -3.0f);
     [SerializeField] private bool faceSpawnedActorsTowardGate = true;
     [SerializeField, Min(0.25f)] private float returnPathTimeoutSeconds = 12f;
     [SerializeField, Min(0.05f)] private float returnPathTimeoutSecondsPerStep = 0.75f;
@@ -150,6 +151,34 @@ public class MiniGame2Manager : MonoBehaviour
         returnSequenceRoutine = StartCoroutine(ReturnToGateAndExitRoutine());
     }
 
+    public void DeveloperCompleteAndReturnToNour()
+    {
+        if (returnSequenceRunning)
+            return;
+
+        miniGameEnded = true;
+        endedByEnergyDepletion = false;
+        cardReached = true;
+        cardInteracted = true;
+        UpdateAudioCardRangeState(false);
+        SetPhase(MiniGame2Phase.Completed);
+
+        LastResult = CreateDeveloperSuccessResult();
+        ApplyAndLogRobotStatUpdate(LastResult);
+
+        Log("[MG2] Developer skip completed MiniGame2 with Excellent result");
+        MiniGameCompleted?.Invoke(LastResult);
+
+        MG2ReturnToNourSpawner.PrepareReturnToNour(
+            mainSceneGateAnchorName,
+            mainSceneGateFallbackAnchorName,
+            mainScenePlayerLocalOffset,
+            mainSceneRobotLocalOffset,
+            faceSpawnedActorsTowardGate);
+
+        SceneTransitionFader.TransitionToScene(returnToMainSceneName, -1, Mathf.Max(0.05f, exitFadeDurationSeconds));
+    }
+
     public bool TryGetStartCoord(out Vector2Int coord)
     {
         if (gridManager == null)
@@ -213,6 +242,8 @@ public class MiniGame2Manager : MonoBehaviour
 
     private void Update()
     {
+        TryHandleDeveloperSkipShortcut();
+
         if (!forceCursorVisibleForTileInput)
             return;
 
@@ -223,6 +254,24 @@ public class MiniGame2Manager : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
         if (!Cursor.visible)
             Cursor.visible = true;
+    }
+
+    private void TryHandleDeveloperSkipShortcut()
+    {
+        if (!WasDeveloperSkipPressed())
+            return;
+
+        Debug.Log("[MG2] Developer skip triggered with F8. Completing MiniGame2 and returning to Nour.", this);
+        DeveloperCompleteAndReturnToNour();
+    }
+
+    private static bool WasDeveloperSkipPressed()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null && keyboard.f8Key.wasPressedThisFrame)
+            return true;
+
+        return Input.GetKeyDown(KeyCode.F8);
     }
 
     public void StartMiniGame()
@@ -840,6 +889,23 @@ public class MiniGame2Manager : MonoBehaviour
         return Mathf.Clamp((low / high) * 100f, 0f, 100f);
     }
 
+    private static MiniGame2EvaluationResult CreateDeveloperSuccessResult()
+    {
+        return new MiniGame2EvaluationResult
+        {
+            finalScore = 100f,
+            tier = MiniGameTier.Excellent,
+            energyEfficiencyScore = 100f,
+            pathEfficiencyScore = 100f,
+            actualEnergy = 0f,
+            idealEnergy = 0f,
+            actualStepCount = 0,
+            idealStepCount = 0,
+            isSuccess = true,
+            failedByEnergyDepletion = false
+        };
+    }
+
     private IEnumerator ReturnToGateAndExitRoutine()
     {
         returnSequenceRunning = true;
@@ -926,7 +992,7 @@ public class MiniGame2Manager : MonoBehaviour
             if (holdAtGateBeforeTransitionSeconds > 0f)
                 yield return new WaitForSecondsRealtime(holdAtGateBeforeTransitionSeconds);
 
-            GameSessionFlowFlags.RequestMiniGame2ReturnSpawn(
+            MG2ReturnToNourSpawner.PrepareReturnToNour(
                 mainSceneGateAnchorName,
                 mainSceneGateFallbackAnchorName,
                 mainScenePlayerLocalOffset,

@@ -394,7 +394,21 @@ public class IntroRobotController : MonoBehaviour
 
         if (miniGame1Manager != null)
         {
-            if (miniGame1Manager.IsMiniGameRunning || miniGame1Manager.CurrentPhase == MiniGame1Manager.MiniGame1Phase.Completed)
+            if (miniGame1Manager.IsMiniGameRunning)
+            {
+                Debug.Log($"[IntroRobotController] Developer skip triggered with key {developerSkipKey}: completing MiniGame1 and loading MiniGame2.", this);
+                miniGame1Manager.DeveloperCompleteMiniGame();
+
+                MG1ToMG2FlowCoordinator flowCoordinator = FindFirstObjectByType<MG1ToMG2FlowCoordinator>();
+                if (flowCoordinator != null)
+                    flowCoordinator.DeveloperLoadMiniGame2Now();
+                else
+                    Debug.LogWarning("[IntroRobotController] Could not find MG1ToMG2FlowCoordinator for developer MiniGame2 load.", this);
+
+                return;
+            }
+
+            if (miniGame1Manager.CurrentPhase == MiniGame1Manager.MiniGame1Phase.Completed)
                 return;
         }
 

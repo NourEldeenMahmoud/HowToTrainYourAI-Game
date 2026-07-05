@@ -1,10 +1,41 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class MG2ReturnToNourSpawner : MonoBehaviour
 {
     private const string NourSceneName = "Nour";
+    private static MG2ReturnToNourSpawner persistentSpawner;
+
+    private bool hasPreparedRequest;
+    private GameSessionFlowFlags.MiniGame2ReturnSpawnRequest preparedRequest;
+
+    public static void PrepareReturnToNour(
+        string primaryAnchorName,
+        string fallbackAnchorName,
+        Vector3 playerLocalOffset,
+        Vector3 robotLocalOffset,
+        bool faceTowardAnchor)
+    {
+        GameSessionFlowFlags.RequestSkipMainMenuOnce();
+
+        if (persistentSpawner == null)
+        {
+            GameObject go = new GameObject("MG2ReturnToNourSpawner");
+            persistentSpawner = go.AddComponent<MG2ReturnToNourSpawner>();
+            DontDestroyOnLoad(go);
+        }
+
+        persistentSpawner.Prepare(new GameSessionFlowFlags.MiniGame2ReturnSpawnRequest
+        {
+            primaryAnchorName = primaryAnchorName,
+            fallbackAnchorName = fallbackAnchorName,
+            playerLocalOffset = playerLocalOffset,
+            robotLocalOffset = robotLocalOffset,
+            faceTowardAnchor = faceTowardAnchor
+        });
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void BootstrapOnSceneLoad()
@@ -20,17 +51,50 @@ public class MG2ReturnToNourSpawner : MonoBehaviour
         go.AddComponent<MG2ReturnToNourSpawner>();
     }
 
-    private void Start()
+    private void OnDestroy()
     {
-        TryApplySpawn();
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+
+        if (persistentSpawner == this)
+            persistentSpawner = null;
     }
 
-    private void TryApplySpawn()
+    private void Prepare(GameSessionFlowFlags.MiniGame2ReturnSpawnRequest request)
     {
+        preparedRequest = request;
+        hasPreparedRequest = true;
+
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
+        Debug.Log("[MG2->Nour] Prepared persistent return spawn.", this);
+
+        Scene active = SceneManager.GetActiveScene();
+        if (active.IsValid() && active.name.Equals(NourSceneName, StringComparison.OrdinalIgnoreCase))
+            StartCoroutine(ApplyPreparedSpawnWhenReady());
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (!hasPreparedRequest)
+            return;
+
+        if (!scene.IsValid() || !scene.name.Equals(NourSceneName, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        Debug.Log("[MG2->Nour] Nour loaded. Applying return spawn.", this);
+        StartCoroutine(ApplyPreparedSpawnWhenReady());
+    }
+
+    private IEnumerator Start()
+    {
+        if (hasPreparedRequest)
+            yield break;
+
         if (!GameSessionFlowFlags.TryConsumeMiniGame2ReturnSpawn(out GameSessionFlowFlags.MiniGame2ReturnSpawnRequest request))
         {
             Destroy(gameObject);
-            return;
+            yield break;
         }
 
         Transform anchor = ResolveAnchor(request.primaryAnchorName, request.fallbackAnchorName);
@@ -38,14 +102,56 @@ public class MG2ReturnToNourSpawner : MonoBehaviour
         {
             Debug.LogWarning("[MG2->Nour] Spawn anchor not found. Keeping default scene placement.", this);
             Destroy(gameObject);
-            return;
+            yield break;
         }
+
+        yield return null;
+
+        for (int i = 0; i < 5; i++)
+        {
+            ApplySpawn(request, anchor, i == 4);
+            yield return null;
+        }
+
+        Destroy(gameObject);
+    }
+
+    private IEnumerator ApplyPreparedSpawnWhenReady()
+    {
+        if (!hasPreparedRequest)
+            yield break;
+
+        Transform anchor = ResolveAnchor(preparedRequest.primaryAnchorName, preparedRequest.fallbackAnchorName);
+        if (anchor == null)
+        {
+            Debug.LogWarning("[MG2->Nour] Prepared spawn anchor not found. Keeping default scene placement.", this);
+            hasPreparedRequest = false;
+            Destroy(gameObject);
+            yield break;
+        }
+
+        yield return null;
+
+        for (int i = 0; i < 10; i++)
+        {
+            ApplySpawn(preparedRequest, anchor, i == 9);
+            yield return null;
+        }
+
+        hasPreparedRequest = false;
+        Destroy(gameObject);
+    }
+
+    private void ApplySpawn(GameSessionFlowFlags.MiniGame2ReturnSpawnRequest request, Transform anchor, bool logResult)
+    {
+        if (anchor == null)
+            return;
 
         Transform player = ResolvePlayerTransform();
         Transform robot = ResolveRobotTransform();
 
-        Vector3 playerWorld = anchor.TransformPoint(request.playerLocalOffset);
-        Vector3 robotWorld = anchor.TransformPoint(request.robotLocalOffset);
+        Vector3 playerWorld = anchor.position + request.playerLocalOffset;
+        Vector3 robotWorld = anchor.position + request.robotLocalOffset;
 
         if (player != null)
             PlaceActor(player, playerWorld, request.faceTowardAnchor, anchor.position);
@@ -59,9 +165,18 @@ public class MG2ReturnToNourSpawner : MonoBehaviour
 
         ControlManager controlManager = FindFirstObjectByType<ControlManager>();
         if (controlManager != null)
+        {
+            controlManager.SetMessageBlocksPlayerControls(false);
+            controlManager.SetSwitchEnabled(true);
             controlManager.ForcePlayerControlState();
+        }
 
-        Destroy(gameObject);
+        MG1InstructionSequenceController instructions = MG1InstructionSequenceController.Instance ?? FindFirstObjectByType<MG1InstructionSequenceController>();
+        if (instructions != null)
+            instructions.SetHeadToStorageStage();
+
+        if (logResult)
+            Debug.Log($"[MG2->Nour] Applied return spawn anchor={anchor.name} player={playerWorld} robot={robotWorld}", this);
     }
 
     private static Transform ResolveAnchor(string primaryName, string fallbackName)
