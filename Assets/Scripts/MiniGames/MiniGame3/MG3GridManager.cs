@@ -532,4 +532,14 @@ public class MG3GridManager : MonoBehaviour
         int maxY = MinGridY + gridHeight;
         return coord.x >= MinGridX && coord.y >= MinGridY && coord.x < maxX && coord.y < maxY;
     }
+
+    internal void RestoreLabObstacles()
+    {
+        throw new System.NotImplementedException();
+    }
+
+    internal void RegisterLabObstacles(Transform labRoot)
+    {
+        throw new System.NotImplementedException();
+    }
 }
