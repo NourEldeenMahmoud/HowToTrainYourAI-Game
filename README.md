@@ -291,22 +291,12 @@ Open the `Main Scene` to start.
 
 ## Team
 
-| Name | Role |
-|---|---|
-| **Nour** | Core Systems, MG1, Robot Logic |
-| **Omar** | Mini-Game 1 |
-| **Oraby** | Mini-Game 2 |
-| **Aya** | Mini-Game 3, Post-Credits |
-
----
-
-## Documentation
-
-- [`PROJECT_PROGRESS_REFERENCE.md`](PROJECT_PROGRESS_REFERENCE.md) — Implementation map with script responsibilities
-- [`TEAM_COLLABORATION_GUIDE.md`](TEAM_COLLABORATION_GUIDE.md) — Team workflow guide (Arabic)
-- [`TRAILER_PLAN.md`](TRAILER_PLAN.md) — YouTube trailer structure and shot list
-- [`Base Rules/`](Base Rules/) — Design documentation and brainstorming
-- [`Documentation/`](Documentation/) — Technical specs and session handoffs
+| Name | Role | GitHub |
+|---|---|---|
+| **Nour** | Core Systems, MG1, Robot Logic | [@NourEldeenMahmoud](https://github.com/NourEldeenMahmoud) |
+| **Omar** | Mini-Game 1 | [@OmarAbouelkheirr](https://github.com/OmarAbouelkheirr) |
+| **Oraby** | Mini-Game 2 | [@abdalrhman541](https://github.com/abdalrhman541) |
+| **Aya** | Mini-Game 3, Post-Credits | [@AyaSheta13](https://github.com/AyaSheta13) |
 
 ---
 
