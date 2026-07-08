@@ -1,0 +1,13 @@
+---
+description: Unity scene edits only in Nour scene unless user says otherwise
+alwaysApply: true
+---
+
+# Unity scenes: Nour only
+
+When changing **Unity scene files** (`.unity` under `Assets/`):
+
+- Edit **only** `Assets/Scenes/Nour/Nour.unity` for this project.
+- **Do not** modify other scenes (e.g. `Main Scene`, `Mini Game 1`, `Aya/Temp Main Scene`, etc.) unless the user **explicitly** asks to change those scenes in that message.
+
+Code, prefabs, and scripts may still be edited as needed for the task; this rule is specifically about **which `.unity` scene files** to touch by default.

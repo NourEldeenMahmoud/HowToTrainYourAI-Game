@@ -7,6 +7,8 @@ public class RobotMovement : MonoBehaviour
     [Header("References")]
     public Transform orientation;
     public Transform robotObj;
+    [SerializeField] private MiniGame1FaultState miniGameFaultState;
+    [SerializeField] private RobotStabilityApplier stabilityApplier;
 
     private CharacterController controller;
     private Animator anim;
@@ -23,17 +25,43 @@ public class RobotMovement : MonoBehaviour
 
     private Vector2 moveInput;
     private bool isSprinting;
+    private float sprintBlockedUntilTime;
+
+    public Vector2 MoveInput => moveInput;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
         anim = robotObj != null ? robotObj.GetComponentInParent<Animator>() : GetComponentInChildren<Animator>();
 
+        ResolveMiniGameFaultState();
+
+        if (stabilityApplier == null)
+            stabilityApplier = GetComponent<RobotStabilityApplier>();
+
+        if (stabilityApplier == null)
+            stabilityApplier = gameObject.AddComponent<RobotStabilityApplier>();
+
         if (anim != null)
             anim.applyRootMotion = false;
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    public void SetMovementEnabled(bool value)
+    {
+        enabled = value;
+        if (!value)
+        {
+            moveInput = Vector2.zero;
+            isSprinting = false;
+            if (anim != null)
+            {
+                anim.SetBool("IsWalking", false);
+                anim.SetBool("IsSprinting", false);
+            }
+        }
     }
 
     public void OnMove(InputValue value)
@@ -43,7 +71,21 @@ public class RobotMovement : MonoBehaviour
 
     public void OnSprint(InputValue value)
     {
-        isSprinting = value.isPressed;
+        isSprinting = value.isPressed && !IsSprintBlocked;
+    }
+
+    public bool IsSprinting => isSprinting;
+    public bool IsSprintBlocked => Time.time < sprintBlockedUntilTime;
+
+    public void CancelSprintFromFault(float blockDurationSeconds)
+    {
+        sprintBlockedUntilTime = Mathf.Max(sprintBlockedUntilTime, Time.time + Mathf.Max(0f, blockDurationSeconds));
+        isSprinting = false;
+    }
+
+    public void SetMiniGameFaultState(MiniGame1FaultState faultState)
+    {
+        miniGameFaultState = faultState;
     }
 
     void Update()
@@ -69,13 +111,34 @@ public class RobotMovement : MonoBehaviour
     {
         if (orientation == null) return;
 
-        Vector3 moveDirection = orientation.forward * moveInput.y + orientation.right * moveInput.x;
+        if (miniGameFaultState == null)
+            ResolveMiniGameFaultState();
+
+        Vector3 forward = orientation.forward;
+        Vector3 right = orientation.right;
+
+        float persistentYawDrift = stabilityApplier != null ? stabilityApplier.GetYawDriftDegrees() : 0f;
+        float miniGameYawDrift = (miniGameFaultState != null && miniGameFaultState.faultsEnabled) ? miniGameFaultState.yawDriftDeg : 0f;
+        float totalYawDrift = persistentYawDrift + miniGameYawDrift;
+
+        if (Mathf.Abs(totalYawDrift) > 0.01f)
+        {
+            Quaternion driftRot = Quaternion.Euler(0f, totalYawDrift, 0f);
+            forward = driftRot * forward;
+            right = driftRot * right;
+        }
+
+        Vector3 moveDirection = forward * moveInput.y + right * moveInput.x;
         moveDirection.y = 0f;
 
         bool hasMoveInput = moveInput.magnitude > 0.1f;
         bool shouldSprint = hasMoveInput && isSprinting;
 
         float targetSpeed = hasMoveInput ? (shouldSprint ? runSpeed : walkSpeed) : 0f;
+
+        if (miniGameFaultState != null && miniGameFaultState.faultsEnabled)
+            targetSpeed *= miniGameFaultState.GetSpeedMultiplier();
+
         currentSpeed = Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * speedSmooth);
 
         if (anim != null)
@@ -98,5 +161,17 @@ public class RobotMovement : MonoBehaviour
         finalVelocity.y = verticalVelocity;
 
         controller.Move(finalVelocity * Time.deltaTime);
+    }
+
+    private void ResolveMiniGameFaultState()
+    {
+        if (miniGameFaultState != null)
+            return;
+
+        miniGameFaultState = GetComponent<MiniGame1FaultState>();
+        if (miniGameFaultState == null)
+            miniGameFaultState = GetComponentInParent<MiniGame1FaultState>();
+        if (miniGameFaultState == null)
+            miniGameFaultState = GetComponentInChildren<MiniGame1FaultState>(true);
     }
 }

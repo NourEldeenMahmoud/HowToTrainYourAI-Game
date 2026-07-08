@@ -113,6 +113,54 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "MiniGame2",
+            "id": "4bc3c3c5-f3ec-42aa-a72a-782dfc686559",
+            "actions": [
+                {
+                    "name": "ClickMove",
+                    "type": "Button",
+                    "id": "629666d9-32db-44d4-8d08-a07d8a8fe827",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "PointerPosition",
+                    "type": "Button",
+                    "id": "50286e2d-7c8e-4780-b222-bd4653b2b913",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "f90eac66-cbd4-450f-8792-5c1b0a8d7e73",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ClickMove",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5a3e96c3-a288-4ad7-b4e6-d6286084d786",
+                    "path": "<Pointer>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "PointerPosition",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": []
