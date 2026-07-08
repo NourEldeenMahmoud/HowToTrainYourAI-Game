@@ -5,7 +5,7 @@
 ---
 
 <p align="center">
-  <img src="docs/images/hero-banner.png" alt="How To Train Your AI - Banner" width="80%" />
+  <img src="Documentation/Imgaes/Game hero.png" alt="How To Train Your AI - Banner" width="80%" />
 </p>
 
 <p align="center">
@@ -25,7 +25,11 @@ Through three distinct training modules, the robot evolves from an unreliable pr
 ## Story
 
 <p align="center">
-  <img src="docs/images/story-screenshot.png" alt="The inherited house" width="70%" />
+  <img src="Documentation/Imgaes/House.png" alt="The inherited house" width="70%" />
+</p>
+
+<p align="center">
+  <img src="Documentation/Imgaes/House Gate.png" alt="House gate" width="70%" />
 </p>
 
 You are Nour — a software engineer who just got laid off to AI automation. While packing up your life, a lawyer hands you a letter: your grandfather left you his old house.
@@ -33,6 +37,16 @@ You are Nour — a software engineer who just got laid off to AI automation. Whi
 Inside, buried under dust and memories, you find a half-finished robot and a series of recorded messages. Your grandfather was building something — something he never got to finish. His final message is corrupted, but the last thing it says is clear:
 
 > *"Trust the robot. It will show you what matters."*
+
+<p align="center">
+  <img src="Documentation/Imgaes/Grandfather message.png" alt="Grandfather message" width="70%" />
+</p>
+
+<p align="center">
+  <img src="Documentation/Imgaes/Dialogue 1.png" alt="Dialogue 1" width="45%" />
+  &nbsp;&nbsp;
+  <img src="Documentation/Imgaes/Dialogue 2.png" alt="Dialogue 2" width="45%" />
+</p>
 
 The journey begins in the living room, but it ends somewhere you didn't expect.
 
@@ -45,7 +59,11 @@ The game is built around **three training mini-games**, each teaching the robot 
 ### Mini-Game 1: Control Calibration
 
 <p align="center">
-  <img src="docs/images/mg1-screenshot.png" alt="Mini-Game 1 - Control Calibration" width="70%" />
+  <img src="Documentation/Imgaes/Robot before miniagme 1.png" alt="Robot before Mini-Game 1" width="70%" />
+</p>
+
+<p align="center">
+  <img src="Documentation/Imgaes/minigame 1.png" alt="Mini-Game 1 - Control Calibration" width="70%" />
 </p>
 
 The robot's movement system is unstable. You need to calibrate it.
@@ -55,6 +73,10 @@ The robot's movement system is unstable. You need to calibrate it.
 | **Drift Handling** | The robot drifts left or right. Counter-steer to stay on course. |
 | **Camera Alignment** | The camera pitch is offset. Return it to the target angle. |
 | **Speed Consistency** | Speed wobbles unpredictably. Maintain a steady pace. |
+
+<p align="center">
+  <img src="Documentation/Imgaes/minigame 1.1.png" alt="Mini-Game 1 detail" width="70%" />
+</p>
 
 Your scores determine how reliable the robot is going forward. Nail it, and the robot barely stumbles. Fail, and you'll be fighting random faults for the rest of the game.
 
@@ -67,12 +89,16 @@ Your scores determine how reliable the robot is going forward. Nail it, and the 
 | Average | 50–69 | Frequent faults |
 | Fail | < 50 | Retry required |
 
+<p align="center">
+  <img src="Documentation/Imgaes/minigame 1 result .png" alt="Mini-Game 1 result" width="70%" />
+</p>
+
 ---
 
 ### Mini-Game 2: Sound Card Efficiency Trial
 
 <p align="center">
-  <img src="docs/images/mg2-screenshot.png" alt="Mini-Game 2 - Path Efficiency" width="70%" />
+  <img src="Documentation/Imgaes/minigame 2.png" alt="Mini-Game 2 - Path Efficiency" width="70%" />
 </p>
 
 A top-down grid challenge. The robot needs to collect an audio card while managing a limited energy budget.
@@ -81,6 +107,10 @@ A top-down grid challenge. The robot needs to collect an audio card while managi
 - **Different tiles cost different energy** — some are efficient, some are expensive
 - **Energy depletion = mission failure**
 - **Path efficiency** is measured against the ideal shortest path
+
+<p align="center">
+  <img src="Documentation/Imgaes/minigame 2.1.png" alt="Mini-Game 2 detail" width="70%" />
+</p>
 
 This teaches the robot to make smart decisions under constraints — not just fast ones.
 
@@ -91,7 +121,7 @@ This teaches the robot to make smart decisions under constraints — not just fa
 ### Mini-Game 3: Training Signature Match
 
 <p align="center">
-  <img src="docs/images/mg3-screenshot.png" alt="Mini-Game 3 - Push Puzzle Lab" width="70%" />
+  <img src="Documentation/Imgaes/minigame 3.png" alt="Mini-Game 3 - Push Puzzle Lab" width="70%" />
 </p>
 
 A sci-fi lab. Push devices to their correct positions. Sounds simple — until the puzzles get layered.
@@ -102,12 +132,20 @@ A sci-fi lab. Push devices to their correct positions. Sounds simple — until t
 | **Group Placement** | Group devices by type — any device of the correct group works |
 | **Size Ordering** | Sort devices by size rank in the correct sequence |
 
+<p align="center">
+  <img src="Documentation/Imgaes/minigame 3.1.png" alt="Mini-Game 3 detail" width="70%" />
+</p>
+
 - Right-click to pathfind to a destination
 - Press **E** to push objects one grid step
 - Objects block movement and future devices can't be pushed
 - Deadlock detection resets the task if you get stuck
 
 No timer. No score pressure. The challenge is pure spatial logic.
+
+<p align="center">
+  <img src="Documentation/Imgaes/minigame 3 result .png" alt="Mini-Game 3 result" width="70%" />
+</p>
 
 ---
 
@@ -156,15 +194,15 @@ Better training = fewer interruptions. The robot's reliability is a direct refle
 ## Screenshots
 
 <p align="center">
-  <img src="docs/images/gallery-1.png" alt="Screenshot 1" width="45%" />
+  <img src="Documentation/Imgaes/Robot before miniagme 1.png" alt="Robot before Mini-Game 1" width="45%" />
   &nbsp;&nbsp;
-  <img src="docs/images/gallery-2.png" alt="Screenshot 2" width="45%" />
+  <img src="Documentation/Imgaes/minigame 1 result .png" alt="Mini-Game 1 result" width="45%" />
 </p>
 
 <p align="center">
-  <img src="docs/images/gallery-3.png" alt="Screenshot 3" width="45%" />
+  <img src="Documentation/Imgaes/minigame 2.1.png" alt="Mini-Game 2 detail" width="45%" />
   &nbsp;&nbsp;
-  <img src="docs/images/gallery-4.png" alt="Screenshot 4" width="45%" />
+  <img src="Documentation/Imgaes/minigame 3.1.png" alt="Mini-Game 3 detail" width="45%" />
 </p>
 
 ---
@@ -244,6 +282,10 @@ git lfs pull
 Open the folder in **Unity Hub**. First open will regenerate the `Library/` folder locally.
 
 Open the `Main Scene` to start.
+
+<p align="center">
+  <img src="Documentation/Imgaes/Main Menue.png" alt="Main Menu" width="70%" />
+</p>
 
 ---
 
