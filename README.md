@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <h2><a href="https://youtu.be/bdoZxAmPt6U">▶ Watch Game Preview</a></h2>
+  <h2><a href="https://youtu.be/bdoZxAmPt6U">Watch Game Preview</a></h2>
 </p>
 
 ---
