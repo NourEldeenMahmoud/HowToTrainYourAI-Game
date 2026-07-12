@@ -13,13 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://youtu.be/bdoZxAmPt6U">
-    <img src="https://img.youtube.com/vi/bdoZxAmPt6U/0.jpg" alt="Game Preview" width="70%" />
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://youtu.be/bdoZxAmPt6U">▶ Watch Game Preview</a>
+  <h2><a href="https://youtu.be/bdoZxAmPt6U">▶ Watch Game Preview</a></h2>
 </p>
 
 ---
