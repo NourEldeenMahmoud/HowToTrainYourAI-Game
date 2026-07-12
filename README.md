@@ -8,11 +8,11 @@
   <img src="Documentation/Imgaes/Game hero.png" alt="How To Train Your AI - Banner" width="80%" />
 </p>
 
+<h2 align="center"><a href="https://youtu.be/bdoZxAmPt6U">Watch Game Preview</a></h2>
+
 <p align="center">
   <strong>A narrative-driven training simulator about trust, purpose, and the machines we build.</strong>
 </p>
-
-<h2 align="center"><a href="https://youtu.be/bdoZxAmPt6U">Watch Game Preview</a></h2>
 
 ---
 
