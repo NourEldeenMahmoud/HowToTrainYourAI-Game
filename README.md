@@ -12,9 +12,7 @@
   <strong>A narrative-driven training simulator about trust, purpose, and the machines we build.</strong>
 </p>
 
-<p align="center">
-  <h2><a href="https://youtu.be/bdoZxAmPt6U">Watch Game Preview</a></h2>
-</p>
+<h2 align="center"><a href="https://youtu.be/bdoZxAmPt6U">Watch Game Preview</a></h2>
 
 ---
 
