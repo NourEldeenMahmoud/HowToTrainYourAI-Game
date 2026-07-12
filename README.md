@@ -14,6 +14,20 @@
 
 ---
 
+## Game Preview
+
+<p align="center">
+  <a href="https://youtu.be/bdoZxAmPt6U">
+    <img src="https://img.youtube.com/vi/bdoZxAmPt6U/0.jpg" alt="Game Preview" width="70%" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/bdoZxAmPt6U">Watch the full preview on YouTube</a>
+</p>
+
+---
+
 ## About
 
 **How To Train Your AI** is a Unity 6 first-person experience where you teach a broken robot to think, move, and solve problems — one mini-game at a time. The irony is the point: the same technology that displaced the player becomes the thing that restores his purpose.
